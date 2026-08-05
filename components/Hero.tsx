@@ -69,7 +69,7 @@ export default function Hero() {
           <div className="text-center">
             <div className="flex items-center justify-center gap-8 mb-3">
               <Image
-                src="https://www.pointblank.club/_next/static/media/logo.8d55ed6e.svg"
+                src="https://pointblank.club/_next/static/media/logo.0sigtz4rhlxj0.svg"
                 alt="PointBlank Logo"
                 width={120}
                 height={60}
