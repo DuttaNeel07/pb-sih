@@ -23,13 +23,18 @@ export default function Navbar() {
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <Link href="/" className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="flex shrink-0 items-center"
+                aria-label="DSCE home"
+              >
                 <Image
-                  src="https://www.pointblank.club/_next/static/media/logo.8d55ed6e.svg"
+                  src="/DSCElogo.svg"
                   alt="DSCE Logo"
-                  width={120}
-                  height={8}
-                  className="sm:w-[150px] sm:h-[10px]"
+                  width={66}
+                  height={64}
+                  priority
+                  className="h-11 w-11 object-contain sm:h-12 sm:w-12 lg:h-14 lg:w-14"
                 />
               </Link>
             </motion.div>
