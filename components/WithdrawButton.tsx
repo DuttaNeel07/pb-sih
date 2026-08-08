@@ -22,7 +22,7 @@ export default function WithdrawButton({ teamName, onWithdrawSuccess }: Withdraw
     setIsWithdrawing(true);
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/team/withdraw", {
+      const response = await fetch("/sih/api/team/withdraw", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

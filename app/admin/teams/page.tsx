@@ -156,7 +156,7 @@ export default function TeamsManagement() {
 
     setUpdating(teamId);
     try {
-      const response = await fetch("/api/admin/teams", {
+      const response = await fetch("/sih/api/admin/teams", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -189,7 +189,7 @@ export default function TeamsManagement() {
 
     setDeleting(teamId);
     try {
-      const response = await fetch("/api/admin/teams", {
+      const response = await fetch("/sih/api/admin/teams", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

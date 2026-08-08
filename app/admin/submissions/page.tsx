@@ -104,7 +104,7 @@ export default function AdminSubmissions() {
     }
 
     try {
-      const response = await fetch("/api/admin/tasks", {
+      const response = await fetch("/sih/api/admin/tasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -168,7 +168,7 @@ export default function AdminSubmissions() {
   const fetchProblemStatements = async () => {
     const token = localStorage.getItem("adminToken");
     try {
-      const response = await fetch("/api/admin/problem-statements", {
+      const response = await fetch("/sih/api/admin/problem-statements", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {

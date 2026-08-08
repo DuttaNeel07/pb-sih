@@ -59,7 +59,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
         return;
       }
 
-      const response = await fetch("/api/admin/verify", {
+      const response = await fetch("/sih/api/admin/verify", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -82,7 +82,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/login", {
+      const response = await fetch("/sih/api/admin/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +115,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
     try {
       const token = localStorage.getItem("adminToken");
       if (token) {
-        await fetch("/api/admin/logout", {
+        await fetch("/sih/api/admin/logout", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -54,7 +55,7 @@ export default function TeamInfo() {
       setLoading(true);
       try {
         const token = await user.getIdToken();
-        const response = await fetch("/api/teamRegistration", {
+        const response = await fetch("/sih/api/teamRegistration", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -103,12 +104,12 @@ export default function TeamInfo() {
               <p className="text-text font-body mb-8">
                 You are not registered with any team yet.
               </p>
-              <a
+              <Link
                 href="/registration"
                 className="px-8 py-3 bg-gradient-to-r from-heading to-subheading text-background rounded-full text-lg font-bold tracking-wide shadow-2xl font-body hover:shadow-heading/30 hover:shadow-lg transition-all duration-300"
               >
                 Register Your Team
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -202,7 +203,7 @@ export default function TeamInfo() {
                 <div className="text-center">
                   <div className="w-48 h-48 bg-white rounded-2xl p-4 mb-4 mx-auto shadow-2xl">
                     <img 
-                      src="/sihqr.jpg" 
+                      src="/sih/sihqr.jpg" 
                       alt="WhatsApp QR Code" 
                       className="w-full h-full object-contain rounded-lg"
                     />

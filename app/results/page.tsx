@@ -126,7 +126,7 @@ export default function ResultsPage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const response = await fetch("/api/results");
+        const response = await fetch("/sih/api/results");
         if (response.ok) {
           const results = await response.json();
           setData(results);

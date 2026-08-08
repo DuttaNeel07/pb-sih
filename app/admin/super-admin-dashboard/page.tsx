@@ -43,17 +43,17 @@ export default function SuperAdminDashboard() {
         }
 
         // Fetch teams stats
-        const teamsResponse = await fetch("/api/admin/teams?limit=1000", {
+        const teamsResponse = await fetch("/sih/api/admin/teams?limit=1000", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         // Fetch problem statements stats
-        const psResponse = await fetch("/api/admin/problem-statements", {
+        const psResponse = await fetch("/sih/api/admin/problem-statements", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         // Fetch tasks stats
-        const tasksResponse = await fetch("/api/admin/tasks", {
+        const tasksResponse = await fetch("/sih/api/admin/tasks", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -86,13 +86,13 @@ export default function SuperAdminDashboard() {
           // Fetch team status counts separately
           const [registeredResponse, selectedResponse, finalistResponse] =
             await Promise.all([
-              fetch("/api/admin/teams?status=registered&limit=1000", {
+              fetch("/sih/api/admin/teams?status=registered&limit=1000", {
                 headers: { Authorization: `Bearer ${token}` },
               }),
-              fetch("/api/admin/teams?status=selected&limit=1000", {
+              fetch("/sih/api/admin/teams?status=selected&limit=1000", {
                 headers: { Authorization: `Bearer ${token}` },
               }),
-              fetch("/api/admin/teams?status=finalist&limit=1000", {
+              fetch("/sih/api/admin/teams?status=finalist&limit=1000", {
                 headers: { Authorization: `Bearer ${token}` },
               }),
             ]);

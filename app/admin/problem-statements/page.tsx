@@ -43,7 +43,7 @@ export default function ProblemStatementsManagement() {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/problem-statements", {
+      const response = await fetch("/sih/api/admin/problem-statements", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -65,7 +65,7 @@ export default function ProblemStatementsManagement() {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/admin/problem-statements", {
+      const response = await fetch("/sih/api/admin/problem-statements", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +103,7 @@ export default function ProblemStatementsManagement() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/admin/problem-statements", {
+      const response = await fetch("/sih/api/admin/problem-statements", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -135,7 +135,7 @@ export default function ProblemStatementsManagement() {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/admin/problem-statements/template", {
+      const response = await fetch("/sih/api/admin/problem-statements/template", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

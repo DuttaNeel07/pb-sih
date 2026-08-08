@@ -65,7 +65,7 @@ export default function TeamTasks() {
     setLoading(true);
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/team/tasks", {
+      const response = await fetch("/sih/api/team/tasks", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

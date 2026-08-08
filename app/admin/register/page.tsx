@@ -62,7 +62,7 @@ export default function AdminRegister() {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/register", {
+      const response = await fetch("/sih/api/admin/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
