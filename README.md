@@ -1,4 +1,4 @@
-# SIH Registration Portal
+# sih Registration Portal
 
 A web-based registration platform built for the **internal rounds of Smart India Hackathon (SIH)** — one of the **largest hackathons in Asia**.  
 The platform handled **high traffic with lakhs of visits** during the registration period.
