@@ -29,7 +29,7 @@ export default function Navbar() {
                 aria-label="DSCE home"
               >
                 <Image
-                  src="/dscelogo.png"
+                  src="/sih/dscelogo.png"
                   alt="DSCE Logo"
                   width={66}
                   height={64}
