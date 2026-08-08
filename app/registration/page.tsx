@@ -179,7 +179,7 @@ export default function Registration() {
     setSubmitLoading(true);
     try {
       const token = await user.getIdToken();
-      const response = await fetch("/api/teamRegistration", {
+      const response = await fetch("/sih/api/teamRegistration", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -193,7 +193,7 @@ export default function Registration() {
         alert("Team registered successfully!");
         // Refresh team status and redirect to team info
         await refreshTeamStatus();
-        window.location.href = "/team-info";
+        window.location.href = "/sih/team-info";
       } else {
         const error = await response.json();
 
@@ -364,7 +364,7 @@ export default function Registration() {
       setLoading(true);
       try {
         // Fetch problem statements only once
-        const psResponse = await fetch("/api/problem-statements");
+        const psResponse = await fetch("/sih/api/problem-statements");
         if (psResponse.ok) {
           const psData = await psResponse.json();
           setProblemStatements(psData.problemStatements || []);
@@ -372,7 +372,7 @@ export default function Registration() {
 
         // Check for existing team registration
         const token = await user.getIdToken();
-        const teamResponse = await fetch("/api/teamRegistration", {
+        const teamResponse = await fetch("/sih/api/teamRegistration", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

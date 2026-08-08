@@ -77,7 +77,7 @@ export default function TasksManagement() {
     }
 
     try {
-      const response = await fetch("/api/admin/tasks", {
+      const response = await fetch("/sih/api/admin/tasks", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -139,7 +139,7 @@ export default function TasksManagement() {
       if (!token) return;
 
       try {
-        const response = await fetch("/api/admin/teams/selection", {
+        const response = await fetch("/sih/api/admin/teams/selection", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -334,7 +334,7 @@ export default function TasksManagement() {
         dueDate: combinedDateTime || undefined,
       };
 
-      const response = await fetch("/api/admin/tasks", {
+      const response = await fetch("/sih/api/admin/tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -373,7 +373,7 @@ export default function TasksManagement() {
     if (!token) return;
 
     try {
-      const response = await fetch("/api/admin/tasks", {
+      const response = await fetch("/sih/api/admin/tasks", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

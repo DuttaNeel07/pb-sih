@@ -57,7 +57,7 @@ export default function EvaluatorDashboard() {
     }
 
     try {
-      const response = await fetch("/api/admin/evaluator/dashboard", {
+      const response = await fetch("/sih/api/admin/evaluator/dashboard", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

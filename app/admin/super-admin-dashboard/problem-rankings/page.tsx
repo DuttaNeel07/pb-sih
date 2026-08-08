@@ -112,7 +112,7 @@ export default function ProblemRankingsOverview() {
         return;
       }
 
-      const response = await fetch("/api/admin/rankings/problem-statements", {
+      const response = await fetch("/sih/api/admin/rankings/problem-statements", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -225,7 +225,7 @@ export default function ProblemRankingsOverview() {
         return;
       }
 
-      const response = await fetch(`/api/admin/teams/${teamId}/status`, {
+      const response = await fetch(`/sih/api/admin/teams/${teamId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

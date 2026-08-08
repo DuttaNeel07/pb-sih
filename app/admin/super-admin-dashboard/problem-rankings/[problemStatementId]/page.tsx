@@ -142,7 +142,7 @@ export default function ProblemStatementDetail() {
         return;
       }
 
-      const response = await fetch(`/api/admin/teams/${teamId}/status`, {
+      const response = await fetch(`/sih/api/admin/teams/${teamId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

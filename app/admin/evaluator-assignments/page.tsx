@@ -55,7 +55,7 @@ export default function EvaluatorAssignments() {
   const fetchAssignmentData = async () => {
     const token = localStorage.getItem("adminToken");
     try {
-      const response = await fetch("/api/admin/evaluators/assignments", {
+      const response = await fetch("/sih/api/admin/evaluators/assignments", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -100,7 +100,7 @@ export default function EvaluatorAssignments() {
     const token = localStorage.getItem("adminToken");
 
     try {
-      const response = await fetch("/api/admin/evaluators/assignments", {
+      const response = await fetch("/sih/api/admin/evaluators/assignments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

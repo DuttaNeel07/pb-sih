@@ -52,7 +52,7 @@ export default function ProblemStatements() {
       if (fetched) return;
       
       try {
-        const response = await fetch('/api/problem-statements');
+        const response = await fetch('/sih/api/problem-statements');
         if (response.ok) {
           const data = await response.json();
           setProblemStatements(data.problemStatements || []);

@@ -58,7 +58,7 @@ export default function EvaluatorRankingsOverview() {
         return;
       }
 
-      const response = await fetch("/api/admin/rankings/evaluators", {
+      const response = await fetch("/sih/api/admin/rankings/evaluators", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

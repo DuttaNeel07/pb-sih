@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     try {
       const token = await currentUser.getIdToken();
-      const response = await fetch('/api/teamRegistration', {
+      const response = await fetch('/sih/api/teamRegistration', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -84,10 +84,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           
           // Check user role and team status
           const [userResponse, teamResponse] = await Promise.all([
-            fetch('/api/auth/verify', {
+            fetch('/sih/api/auth/verify', {
               headers: { 'Authorization': `Bearer ${token}` }
             }),
-            fetch('/api/teamRegistration', {
+            fetch('/sih/api/teamRegistration', {
               headers: { 'Authorization': `Bearer ${token}` }
             })
           ]);
@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (user) {
         try {
           const token = await user.getIdToken();
-          await fetch('/api/auth/verify', {
+          await fetch('/sih/api/auth/verify', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (result.user) {
         try {
           const token = await result.user.getIdToken();
-          await fetch('/api/auth/verify', {
+          await fetch('/sih/api/auth/verify', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
