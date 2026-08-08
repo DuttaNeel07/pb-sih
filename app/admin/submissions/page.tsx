@@ -83,7 +83,7 @@ export default function AdminSubmissions() {
   const fetchTaskSubmissionStats = async (taskId: string) => {
     const token = localStorage.getItem("adminToken");
     try {
-      const response = await fetch(`/api/admin/submissions/${taskId}/stats`, {
+      const response = await fetch(`/sih/api/admin/submissions/${taskId}/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -186,7 +186,7 @@ export default function AdminSubmissions() {
     const token = localStorage.getItem("adminToken");
 
     try {
-      const response = await fetch(`/api/admin/submissions/${taskId}`, {
+      const response = await fetch(`/sih/api/admin/submissions/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -274,7 +274,7 @@ export default function AdminSubmissions() {
     const token = localStorage.getItem("adminToken");
 
     try {
-      const response = await fetch(`/api/admin/teams/${teamId}/status`, {
+      const response = await fetch(`/sih/api/admin/teams/${teamId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
