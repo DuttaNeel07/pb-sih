@@ -9,6 +9,46 @@ export interface Winner {
 
 export const winners: Winner[] = [
   {
+    year: "2025",
+    category: "Software",
+    teamName: "Win Diesel",
+    projectTitle: "Automated Optical Inspection Software (AOI) based IC marking to identify fake marking",
+    members: ["Alfiya Fatima", "Chetan R", "Yuktha P S", "Ananya Gupta", "Kshitij Narayan Kulkarni", "Rishi Chirchi"],
+    achievement: "Winner - SIH 2025"
+  },
+  {
+    year: "2025",
+    category: "Hardware",
+    teamName: "ClutchSIH",
+    projectTitle: "Cloudburst Early Warning and Alarm System",
+    members: ["CV Balaji", "Abhinav M Pamadi", "Aprameya Bharadwaj", "Himanshu Rai", "Vibha Shankar Rao", "Vineeth Nakka"],
+    achievement: "Winner - SIH 2025"
+  },
+  {
+    year: "2025",
+    category: "Software",
+    teamName: "Point Blank",
+    projectTitle: "Application software to obfuscate the object file using Low Level Virtual Machine (LLVM)",
+    members: ["Inchara J", "Akash Singh", "Dhruv Puri", "Shubhang Sinha", "J R Vanisha", "Deval Gupta"],
+    achievement: "Winner - SIH 2025"
+  },
+  {
+    year: "2025",
+    category: "Software",
+    teamName: "Dedsec_01",
+    projectTitle: "Development of Threat rules in ELK Stack for detection of APTs (Advanced Persistent Threats)",
+    members: ["R Aswin", "Sanjay H", "Pragati Raj", "Ritisha Bhattacharjee", "Tanmay R K", "Shreyas Reddy"],
+    achievement: "Winner - SIH 2025"
+  },
+  {
+    year: "2025",
+    category: "Software",
+    teamName: "Five_States",
+    projectTitle: "Real-time Threat Intelligence and Malware Analysis Platform",
+    members: ["Bhoomi Agrawal", "Prajwal KP", "Kamini Banait", "Tushar Mohapatra", "Shruti Sinha", "Supreeth C"],
+    achievement: "Winner - SIH 2025"
+  },
+  {
     year: "2024",
     category: "Software",
     teamName: "LAN Lords",
