@@ -196,7 +196,7 @@ export default function ResultsPage() {
             </div>
             <p className="font-body text-xl text-subheading max-w-3xl mx-auto leading-relaxed">
               Celebrating the exceptional teams selected in Smart India
-              Hackathon 2025
+              Hackathon 2026
             </p>
           </motion.div>
 

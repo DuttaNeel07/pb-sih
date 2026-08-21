@@ -518,7 +518,7 @@ export default function Registration() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Register your team for the Smart India Hackathon 2025 Internal
+              Register your team for the Smart India Hackathon 2026 Internal
               Round.
             </motion.p>
           </div>
