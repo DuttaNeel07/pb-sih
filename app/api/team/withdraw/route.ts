@@ -184,14 +184,14 @@ export async function POST(request: NextRequest) {
     /*
     if (leader.email) {
       try {
-        const emailSubject = "Team Withdrawal Confirmation - Smart India Hackathon 2025";
+        const emailSubject = "Team Withdrawal Confirmation - Smart India Hackathon 2026";
         const emailHTML = `
         <html>
         <body>
           <h2>Team Withdrawal Confirmation</h2>
           <p>Dear ${leader.name},</p>
           
-          <p>We have successfully processed your team withdrawal from the Smart India Hackathon 2025.</p>
+          <p>We have successfully processed your team withdrawal from the Smart India Hackathon 2026.</p>
           
           <h3>Withdrawn Team Details:</h3>
           <ul>

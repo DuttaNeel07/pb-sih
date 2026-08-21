@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import posthog from "posthog-js";
 
 interface TaskSubmission {
   taskId: string;
@@ -287,6 +288,9 @@ export default function EvaluatorRanking() {
 
       if (response.ok) {
         const data = await response.json();
+        posthog.capture(finalize ? "evaluator_rankings_finalized" : "evaluator_rankings_draft_saved", {
+          ranked_team_count: rankings.length,
+        });
         alert(
           finalize
             ? "Rankings finalized successfully!"

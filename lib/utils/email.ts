@@ -62,7 +62,7 @@ export async function sendTeamRegistrationEmail(
   leaderEmail: string,
   problemStatement: string
 ): Promise<void> {
-  const subject = `SIH 2025 - Team Registration Confirmed: ${teamName}`;
+  const subject = `SIH 2026 - Team Registration Confirmed: ${teamName}`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -83,11 +83,11 @@ export async function sendTeamRegistrationEmail(
         <div class="container">
             <div class="header">
                 <h1>🎉 Registration Confirmed!</h1>
-                <p>Smart India Hackathon 2025</p>
+                <p>Smart India Hackathon 2026</p>
             </div>
             <div class="content">
                 <h2>Hello ${leaderName},</h2>
-                <p>Congratulations! Your team <strong>"${teamName}"</strong> has been successfully registered for the Smart India Hackathon 2025.</p>
+                <p>Congratulations! Your team <strong>"${teamName}"</strong> has been successfully registered for the Smart India Hackathon 2026.</p>
                 
                 <div class="highlight">
                     <h3>📋 Registration Details:</h3>
@@ -116,7 +116,7 @@ export async function sendTeamRegistrationEmail(
                 <p>If you have any questions, please don't hesitate to contact our support team.</p>
                 
                 <p>Best of luck for the hackathon!</p>
-                <p><strong>Team SIH 2025</strong></p>
+                <p><strong>Team SIH 2026</strong></p>
             </div>
             <div class="footer">
                 <p>This is an automated email. Please do not reply to this message.</p>
@@ -130,7 +130,7 @@ export async function sendTeamRegistrationEmail(
     to: leaderEmail,
     subject,
     html,
-    text: `Hello ${leaderName}, Your team "${teamName}" has been successfully registered for SIH 2025 with problem statement: ${problemStatement}`,
+    text: `Hello ${leaderName}, Your team "${teamName}" has been successfully registered for SIH 2026 with problem statement: ${problemStatement}`,
   });
 }
 
@@ -151,7 +151,7 @@ export async function sendTaskAssignmentEmail(
   taskDescription?: string,
   dueDate?: Date
 ): Promise<void> {
-  const subject = `SIH 2025 - New Task Assigned: ${taskTitle}`;
+  const subject = `SIH 2026 - New Task Assigned: ${taskTitle}`;
   const dueDateText = dueDate
     ? `<li><strong>Due Date:</strong> ${dueDate.toLocaleDateString("en-IN", {
         year: "numeric",
@@ -182,7 +182,7 @@ export async function sendTaskAssignmentEmail(
         <div class="container">
             <div class="header">
                 <h1>📝 New Task Assigned</h1>
-                <p>Smart India Hackathon 2025</p>
+                <p>Smart India Hackathon 2026</p>
             </div>
             <div class="content">
                 <h2>Hello ${leaderName},</h2>
@@ -206,7 +206,7 @@ export async function sendTaskAssignmentEmail(
                 <p>If you have any questions about this task, please contact the SIH team.</p>
                 
                 <p>Best regards,</p>
-                <p><strong>Team SIH 2025</strong></p>
+                <p><strong>Team SIH 2026</strong></p>
             </div>
             <div class="footer">
                 <p>This is an automated email. Please do not reply to this message.</p>

@@ -13,6 +13,7 @@ import {
   FileText,
   ExternalLink,
 } from "lucide-react";
+import posthog from "posthog-js";
 
 interface Task {
   _id: string;
@@ -284,6 +285,7 @@ export default function AdminSubmissions() {
       });
 
       if (response.ok) {
+        posthog.capture("submission_team_status_updated", { status: newStatus });
         // Refresh submissions to show updated status
         if (selectedTask) {
           fetchTaskSubmissions(selectedTask._id);

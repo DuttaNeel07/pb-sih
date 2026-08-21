@@ -174,7 +174,7 @@ export default function SuperAdminDashboard() {
               Super Admin Dashboard
             </h1>
             <p className="text-subheading font-body">
-              Smart India Hackathon 2025 - System Administration
+              Smart India Hackathon 2026 - System Administration
             </p>
           </div>
           <div className="text-right">

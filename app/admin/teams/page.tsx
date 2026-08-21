@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminAuth } from "@/lib/context/AdminAuthContext";
 import { AlertCircle } from "lucide-react";
+import posthog from "posthog-js";
 
 interface TeamMember {
   name: string;
@@ -166,6 +167,7 @@ export default function TeamsManagement() {
       });
 
       if (response.ok) {
+        posthog.capture("team_status_updated", { status: newStatus });
         setTeams(
           teams.map((team) =>
             team._id === teamId
@@ -200,6 +202,7 @@ export default function TeamsManagement() {
 
       if (response.ok) {
         const data = await response.json();
+        posthog.capture("team_deleted");
         // Remove the team from the list
         setTeams(teams.filter((team) => team._id !== teamId));
         setShowDeleteConfirm(null);

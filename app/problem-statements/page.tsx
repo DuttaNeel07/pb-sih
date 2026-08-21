@@ -136,7 +136,7 @@ export default function ProblemStatements() {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <motion.a
-              href="https://www.sih.gov.in/sih2025PS"
+              href="https://www.sih.gov.in/sih2026PS"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-heading/10 text-heading rounded-full text-sm font-medium border border-heading/20 hover:bg-heading hover:text-white transition-colors duration-300 tracking-wide"

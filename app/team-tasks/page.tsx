@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/lib/context/AuthContext";
 import FileUploadInfo from "@/components/FileUploadInfo";
 import CountdownTimer from "@/components/ui/CountdownTimer";
+import posthog from "posthog-js";
 import {
   Calendar,
   Clock,
@@ -288,6 +289,10 @@ export default function TeamTasks() {
       );
 
       if (response.ok) {
+        posthog.capture("task_submission_completed", {
+          field_count: selectedTask.fields.length,
+          has_due_date: Boolean(selectedTask.dueDate),
+        });
         alert("Task submitted successfully!");
         setShowSubmissionForm(false);
         setSelectedTask(null);

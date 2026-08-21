@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import ValidatedInput from '@/components/ui/ValidatedInput';
 import GoogleSignInButton from '@/components/ui/GoogleSignInButton';
 import { useAuth } from '@/lib/context/AuthContext';
+import posthog from 'posthog-js';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -65,6 +66,7 @@ export default function Signup() {
 
     try {
       await signUp(formData.email, formData.password, formData.name);
+      posthog.capture('user_signup_completed', { authentication_method: 'email_password' });
       router.push('/'); // Redirect to home page after successful signup
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -79,6 +81,7 @@ export default function Signup() {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
+      posthog.capture('user_signup_completed', { authentication_method: 'google' });
       router.push('/');
     } catch (error: any) {
       console.error('Google sign-in error:', error);

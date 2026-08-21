@@ -92,12 +92,12 @@ export default function PPTGuidelines() {
                     <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">SIH 2025 Idea Presentation Format</h3>
+                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">SIH 2026 Idea Presentation Format</h3>
                     <p className="text-gray-400 text-xs sm:text-sm">PowerPoint template for your hackathon presentation</p>
                   </div>
                 </div>
                 <a
-                  href="https://www.sih.gov.in/letters/SIH2025-IDEA-Presentation-Format.pptx"
+                  href="https://www.sih.gov.in/letters/2026/SIH2026-IDEA-Presentation-Format.pptx"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto"
@@ -119,12 +119,12 @@ export default function PPTGuidelines() {
                     <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">SIH 2025 Official Guidelines</h3>
+                    <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">SIH 2026 Official Guidelines</h3>
                     <p className="text-gray-400 text-xs sm:text-sm">Reference document for rules and requirements</p>
                   </div>
                 </div>
                 <a
-                  href="https://sih.gov.in/letters/SIH2025-Guidelines-College-SPOC.pdf"
+                  href="https://sih.gov.in/letters/SIH2026-Guidelines-College-SPOC.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto"

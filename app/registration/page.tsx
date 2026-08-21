@@ -11,6 +11,7 @@ import AccordionSection from "@/components/ui/AccordionSection";
 import ValidatedInput from "@/components/ui/ValidatedInput";
 import { useAuth } from "@/lib/context/AuthContext";
 import { validateNoDuplicates } from "@/lib/utils/client-validation";
+import posthog from "posthog-js";
 
 interface ProblemStatement {
   _id: string;
@@ -190,6 +191,10 @@ export default function Registration() {
 
       if (response.ok) {
         await response.json(); // Process response
+        posthog.capture("team_registration_completed", {
+          member_count: formData.members.filter((member) => member.name && member.email && member.phone).length + 1,
+          has_mentor: Boolean(formData.mentor.name),
+        });
         alert("Team registered successfully!");
         // Refresh team status and redirect to team info
         await refreshTeamStatus();
@@ -518,7 +523,7 @@ export default function Registration() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Register your team for the Smart India Hackathon 2025 Internal
+              Register your team for the Smart India Hackathon 2026 Internal
               Round.
             </motion.p>
           </div>
