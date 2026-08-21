@@ -4,8 +4,10 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
+import posthog from "posthog-js";
 
 interface AdminUser {
   _id: string;
@@ -45,6 +47,23 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
 }) => {
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const identifiedAdminId = useRef<string | null>(null);
+
+  const identifyAdmin = (currentAdmin: AdminUser) => {
+    if (identifiedAdminId.current === currentAdmin._id) {
+      return;
+    }
+
+    if (identifiedAdminId.current) {
+      posthog.reset();
+    }
+
+    posthog.identify(currentAdmin._id, {
+      email: currentAdmin.email,
+      role: currentAdmin.role,
+    });
+    identifiedAdminId.current = currentAdmin._id;
+  };
 
   useEffect(() => {
     // Check if admin is already authenticated on mount
@@ -67,6 +86,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
 
       if (response.ok) {
         const data = await response.json();
+        identifyAdmin(data.admin);
         setAdmin(data.admin);
       } else {
         localStorage.removeItem("adminToken");
@@ -101,6 +121,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
 
       // Store token in localStorage
       localStorage.setItem("adminToken", data.token);
+      identifyAdmin(data.admin);
       setAdmin(data.admin);
     } catch (error) {
       setLoading(false);
@@ -126,6 +147,10 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
       console.error("Logout error:", error);
     } finally {
       localStorage.removeItem("adminToken");
+      if (identifiedAdminId.current) {
+        posthog.reset();
+        identifiedAdminId.current = null;
+      }
       setAdmin(null);
       setLoading(false);
     }

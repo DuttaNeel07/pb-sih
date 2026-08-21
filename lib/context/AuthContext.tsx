@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { 
   User, 
   onAuthStateChanged, 
@@ -11,6 +11,7 @@ import {
   GoogleAuthProvider
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import posthog from 'posthog-js';
 
 interface AuthContextType {
   user: User | null;
@@ -43,6 +44,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [hasTeam, setHasTeam] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const identifiedUserId = useRef<string | null>(null);
+  const hasResolvedInitialAuthState = useRef(false);
+
+  const identifyUser = (currentUser: User) => {
+    if (identifiedUserId.current === currentUser.uid) {
+      return;
+    }
+
+    if (identifiedUserId.current) {
+      posthog.reset();
+    }
+
+    posthog.identify(currentUser.uid, {
+      email: currentUser.email ?? undefined,
+      name: currentUser.displayName ?? undefined,
+    });
+    identifiedUserId.current = currentUser.uid;
+  };
 
   // Function to check team registration status
   const refreshTeamStatus = async () => {
@@ -74,6 +93,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        identifyUser(user);
+      } else if (hasResolvedInitialAuthState.current && identifiedUserId.current) {
+        posthog.reset();
+        identifiedUserId.current = null;
+      }
+      hasResolvedInitialAuthState.current = true;
+
       setUser(user);
       setLoading(false);
       

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminAuth } from "@/lib/context/AdminAuthContext";
 import { AlertCircle } from "lucide-react";
+import posthog from "posthog-js";
 
 interface Task {
   _id: string;
@@ -344,6 +345,11 @@ export default function TasksManagement() {
       });
 
       if (response.ok) {
+        posthog.capture("admin_task_created", {
+          assigned_team_count: taskData.assignedTo.length,
+          field_count: taskData.fields.length,
+          has_due_date: Boolean(taskData.dueDate),
+        });
         await fetchTasks(); // Refresh tasks
         setShowCreateForm(false);
         setNewTask({
@@ -383,6 +389,9 @@ export default function TasksManagement() {
       });
 
       if (response.ok) {
+        posthog.capture("admin_task_status_updated", {
+          is_active: !currentStatus,
+        });
         setTasks(
           tasks.map((task) =>
             task._id === taskId ? { ...task, isActive: !currentStatus } : task

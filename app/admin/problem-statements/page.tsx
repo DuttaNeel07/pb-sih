@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminAuth } from "@/lib/context/AdminAuthContext";
 import { AlertCircle } from "lucide-react";
+import posthog from "posthog-js";
 
 interface ProblemStatement {
   _id: string;
@@ -75,6 +76,9 @@ export default function ProblemStatementsManagement() {
       });
 
       if (response.ok) {
+        posthog.capture("problem_statement_status_updated", {
+          is_active: !currentStatus,
+        });
         setProblemStatements(
           problemStatements.map((ps) =>
             ps._id === psId ? { ...ps, isActive: !currentStatus } : ps
@@ -113,6 +117,9 @@ export default function ProblemStatementsManagement() {
 
       if (response.ok) {
         const result = await response.json();
+        posthog.capture("problem_statements_imported", {
+          imported_count: result.imported,
+        });
         alert(`Successfully uploaded ${result.imported} problem statements!`);
         fetchProblemStatements(); // Refresh the list
       } else {

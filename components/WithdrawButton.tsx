@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 
 interface WithdrawButtonProps {
   teamName: string;
@@ -32,6 +33,7 @@ export default function WithdrawButton({ teamName, onWithdrawSuccess }: Withdraw
 
       if (response.ok) {
         const data = await response.json();
+        posthog.capture("team_withdrawn");
         alert(`Team withdrawal successful! ${data.message}`);
         
         // Call success callback if provided

@@ -12,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
+import posthog from "posthog-js";
 
 interface ProblemStatement {
   _id: string;
@@ -113,6 +114,9 @@ export default function EvaluatorAssignments() {
       });
 
       if (response.ok) {
+        posthog.capture("evaluator_assignment_updated", {
+          assigned_problem_statement_count: selectedProblemStatements.length,
+        });
         await fetchAssignmentData(); // Refresh data
         setEditingEvaluator(null);
         setSelectedProblemStatements([]);

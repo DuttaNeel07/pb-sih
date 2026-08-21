@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import ValidatedInput from "@/components/ui/ValidatedInput";
 import { useAdminAuth } from "@/lib/context/AdminAuthContext";
+import posthog from "posthog-js";
 
 export default function AdminLogin() {
   const { signIn, loading: authLoading, admin } = useAdminAuth();
@@ -63,6 +64,7 @@ export default function AdminLogin() {
     setSubmitLoading(true);
     try {
       await signIn(formData.email, formData.password);
+      posthog.capture("admin_login_completed");
       // Redirect will be handled by useEffect when admin state updates
     } catch (error: unknown) {
       console.error("Admin login error:", error);

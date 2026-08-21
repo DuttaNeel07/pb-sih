@@ -11,6 +11,7 @@ import {
   AlertCircle,
   ArrowRight,
 } from "lucide-react";
+import posthog from "posthog-js";
 
 interface ProblemStatementStatus {
   problemStatement: {
@@ -83,6 +84,7 @@ export default function EvaluatorDashboard() {
   };
 
   const handleStartEvaluation = (problemStatementId: string) => {
+    posthog.capture("evaluator_evaluation_started");
     router.push(`/admin/evaluator/ranking/${problemStatementId}`);
   };
 
