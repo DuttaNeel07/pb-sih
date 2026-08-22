@@ -14,6 +14,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface Task {
   _id: string;
@@ -232,7 +233,7 @@ export default function AdminSubmissions() {
 
     // Add error handling for download
     link.onerror = () => {
-      alert("❌ Unable to download file. Please try again.");
+      toast.error("❌ Unable to download file. Please try again.");
     };
 
     document.body.appendChild(link);
@@ -292,13 +293,13 @@ export default function AdminSubmissions() {
         }
         setShowStatusModal(false);
         setSelectedSubmission(null);
-        alert("Team status updated successfully!");
+        toast.success("Team status updated successfully!");
       } else {
-        alert("Failed to update team status");
+        toast.error("Failed to update team status");
       }
     } catch (error) {
       console.error("Error updating team status:", error);
-      alert("An error occurred while updating team status");
+      toast.error("An error occurred while updating team status");
     }
   };
 

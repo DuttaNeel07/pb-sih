@@ -21,6 +21,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface TaskSubmission {
   taskId: string;
@@ -252,7 +253,7 @@ export default function EvaluatorRanking() {
         (team) => !comments[team._id]?.trim()
       );
       if (missingComments.length > 0) {
-        alert(
+        toast.error(
           `Please provide evaluation comments for all teams before finalizing. Missing comments for: ${missingComments
             .map((t) => t.teamName)
             .join(", ")}`
@@ -291,7 +292,7 @@ export default function EvaluatorRanking() {
         posthog.capture(finalize ? "evaluator_rankings_finalized" : "evaluator_rankings_draft_saved", {
           ranked_team_count: rankings.length,
         });
-        alert(
+        toast.success(
           finalize
             ? "Rankings finalized successfully!"
             : "Rankings saved as draft!"
@@ -314,11 +315,11 @@ export default function EvaluatorRanking() {
         }
       } else {
         const errorData = await response.json();
-        alert(`Failed to save rankings: ${errorData.error}`);
+        toast.error(`Failed to save rankings: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Error saving rankings:", error);
-      alert("An error occurred while saving rankings");
+      toast.error("An error occurred while saving rankings");
     } finally {
       setSaving(false);
     }

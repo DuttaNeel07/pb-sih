@@ -5,6 +5,7 @@ import { AlertTriangle, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface WithdrawButtonProps {
   teamName: string;
@@ -34,7 +35,7 @@ export default function WithdrawButton({ teamName, onWithdrawSuccess }: Withdraw
       if (response.ok) {
         const data = await response.json();
         posthog.capture("team_withdrawn");
-        alert(`Team withdrawal successful! ${data.message}`);
+        toast.success(`Team withdrawal successful! ${data.message}`);
         
         // Call success callback if provided
         if (onWithdrawSuccess) {
@@ -45,11 +46,11 @@ export default function WithdrawButton({ teamName, onWithdrawSuccess }: Withdraw
         router.push("/");
       } else {
         const errorData = await response.json();
-        alert(`Failed to withdraw team: ${errorData.error}`);
+        toast.error(`Failed to withdraw team: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Error withdrawing team:", error);
-      alert("Failed to withdraw team. Please try again.");
+      toast.error("Failed to withdraw team. Please try again.");
     } finally {
       setIsWithdrawing(false);
       setShowConfirmDialog(false);

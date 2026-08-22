@@ -5,6 +5,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminAuth } from "@/lib/context/AdminAuthContext";
 import { AlertCircle } from "lucide-react";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface TeamMember {
   name: string;
@@ -207,8 +208,8 @@ export default function TeamsManagement() {
         setTeams(teams.filter((team) => team._id !== teamId));
         setShowDeleteConfirm(null);
 
-        // Show success message (you can replace this with a proper notification system)
-        alert(
+        // Show success message
+        toast.success(
           `Team removed successfully! ${data.deletedTeam.leaderEmail} has been notified.`
         );
 
@@ -216,11 +217,11 @@ export default function TeamsManagement() {
         fetchTeams();
       } else {
         const errorData = await response.json();
-        alert(`Failed to remove team: ${errorData.error}`);
+        toast.error(`Failed to remove team: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Error deleting team:", error);
-      alert("Failed to remove team. Please try again.");
+      toast.error("Failed to remove team. Please try again.");
     } finally {
       setDeleting(null);
     }
