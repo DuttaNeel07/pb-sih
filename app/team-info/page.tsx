@@ -181,7 +181,7 @@ export default function TeamInfo() {
                 </p>
                 <p className="text-subheading text-sm font-body">
                   Registration Date: {registrationDate
-                    ? new Date(registrationDate).toLocaleDateString()
+                    ? new Date(registrationDate).toLocaleDateString("en-IN")
                     : "—"}
                 </p>
               </div>
