@@ -161,7 +161,7 @@ export default function TeamInfo() {
                   <MapPin className="w-5 h-5 text-red-400" />
                   <div className="text-left">
                     <p className="text-sm text-gray-400">Venue</p>
-                    <p className="text-white font-medium">TBD</p>
+                    <p className="text-white font-medium">Online</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-center gap-3 p-4 bg-gray-800/30 rounded-lg">
