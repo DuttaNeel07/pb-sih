@@ -10,6 +10,10 @@ export default function ToastProvider() {
       toastOptions={{
         duration: 5000,
         style: {
+          background: "#111827",
+          color: "#f9fafb",
+          border: "1px solid #374151",
+          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.35)",
           whiteSpace: "pre-line",
         },
       }}
