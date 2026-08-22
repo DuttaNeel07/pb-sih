@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TeamLeader from "@/components/registration/TeamLeader";
@@ -44,6 +45,7 @@ interface ConflictDetail {
 
 export default function Registration() {
   const { user, refreshTeamStatus } = useAuth();
+  const router = useRouter();
 
   const [problemStatements, setProblemStatements] = useState<
     ProblemStatement[]
@@ -167,8 +169,10 @@ export default function Registration() {
   };
 
   // Handle form submission
-  const handleSubmit = async () => {
-    if (!user || !isFormComplete) return;
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!user || !isFormComplete || submitLoading) return;
 
     // Check for duplicates before submitting
     if (!checkDuplicates()) {
@@ -197,11 +201,10 @@ export default function Registration() {
           has_mentor: Boolean(formData.mentor.name),
         });
         toast.success("Team registered successfully!");
-        // Refresh team status and redirect to team info
+        // Refresh team status and navigate without a full-page reload so the
+        // success toast remains visible on the team info page.
         await refreshTeamStatus();
-        setTimeout(() => {
-          window.location.href = "/sih/team-info";
-        }, 1000);
+        router.push("/team-info");
       } else {
         const error = await response.json();
 
@@ -691,7 +694,7 @@ export default function Registration() {
               >
                 {canShowSubmit ? (
                   <button
-                    onClick={handleSubmit}
+                    type="submit"
                     disabled={submitLoading}
                     className="px-12 py-5 bg-gradient-to-r from-heading to-subheading text-background rounded-full text-lg font-bold tracking-wide shadow-2xl font-body hover:shadow-heading/30 hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
