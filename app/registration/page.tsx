@@ -688,7 +688,7 @@ export default function Registration() {
               >
                 {canShowSubmit ? (
                   <button
-                    onClick={handleSubmit}
+                    type="submit"
                     disabled={submitLoading}
                     className="px-12 py-5 bg-gradient-to-r from-heading to-subheading text-background rounded-full text-lg font-bold tracking-wide shadow-2xl font-body hover:shadow-heading/30 hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
