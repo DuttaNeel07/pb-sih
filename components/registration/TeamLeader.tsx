@@ -97,16 +97,6 @@ export default function TeamLeader({ teamLeader, onInputChange, isDataFromAuth =
           />
         </div>
         <div>
-          <CustomDropdown
-            options={branchOptions}
-            value={teamLeader.branch}
-            onChange={(value) => onInputChange('teamLeader', 'branch', value)}
-            label="Branch"
-            placeholder="Select your branch"
-            required
-          />
-        </div>
-        <div>
           <Slider
             options={genderOptions}
             value={teamLeader.gender}
@@ -115,6 +105,16 @@ export default function TeamLeader({ teamLeader, onInputChange, isDataFromAuth =
             showOtherInput={true}
             otherValue={teamLeader.otherGender || ''}
             onOtherChange={(value) => onInputChange('teamLeader', 'otherGender', value)}
+            required
+          />
+        </div>
+        <div>
+          <CustomDropdown
+            options={branchOptions}
+            value={teamLeader.branch}
+            onChange={(value) => onInputChange('teamLeader', 'branch', value)}
+            label="Branch"
+            placeholder="Select your branch"
             required
           />
         </div>
