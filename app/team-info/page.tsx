@@ -212,9 +212,15 @@ export default function TeamInfo() {
                       className="w-full h-full object-contain rounded-lg"
                     />
                   </div>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-gray-400 mb-3">
                     Scan this QR code with your phone to join the group
                   </p>
+                  <div className="max-w-md mx-auto text-center text-xs sm:text-sm text-gray-400 border-t border-gray-800/60 pt-4">
+                    <p className="font-semibold mb-1 text-red-400">WhatsApp Group Guidelines</p>
+                    <p className="leading-relaxed">
+                      This is a professional group exclusively for information sharing and doubts. No irrational or disrespectful behavior will be entertained.
+                    </p>
+                  </div>
                 </div>
               </div>
             </motion.div>
