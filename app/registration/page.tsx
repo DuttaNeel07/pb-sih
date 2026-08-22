@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TeamLeader from "@/components/registration/TeamLeader";
@@ -12,6 +13,7 @@ import ValidatedInput from "@/components/ui/ValidatedInput";
 import { useAuth } from "@/lib/context/AuthContext";
 import { validateNoDuplicates } from "@/lib/utils/client-validation";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface ProblemStatement {
   _id: string;
@@ -43,6 +45,7 @@ interface ConflictDetail {
 
 export default function Registration() {
   const { user, refreshTeamStatus } = useAuth();
+  const router = useRouter();
 
   const [problemStatements, setProblemStatements] = useState<
     ProblemStatement[]
@@ -166,12 +169,14 @@ export default function Registration() {
   };
 
   // Handle form submission
-  const handleSubmit = async () => {
-    if (!user || !isFormComplete) return;
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!user || !isFormComplete || submitLoading) return;
 
     // Check for duplicates before submitting
     if (!checkDuplicates()) {
-      alert(
+      toast.error(
         "Please fix duplicate email/phone number issues before submitting."
       );
       return;
@@ -195,16 +200,17 @@ export default function Registration() {
           member_count: formData.members.filter((member) => member.name && member.email && member.phone).length + 1,
           has_mentor: Boolean(formData.mentor.name),
         });
-        alert("Team registered successfully!");
-        // Refresh team status and redirect to team info
+        toast.success("Team registered successfully!");
+        // Refresh team status and navigate without a full-page reload so the
+        // success toast remains visible on the team info page.
         await refreshTeamStatus();
-        window.location.href = "/sih/team-info";
+        router.push("/team-info");
       } else {
         const error = await response.json();
 
         // Check if user is logged in as admin
         if (error.isAdmin) {
-          alert(
+          toast.error(
             `Please logout as admin (${error.adminEmail}) first, then login as a regular user to register your team.`
           );
         } else {
@@ -231,19 +237,19 @@ export default function Registration() {
             }
             
             detailedMessage += "Please update the conflicting contact information and try again.";
-            alert(detailedMessage);
+            toast.error(detailedMessage);
           } else if (error.errors && Array.isArray(error.errors)) {
             // Handle array of error messages
-            alert(`Registration failed:\n\n${error.errors.join('\n')}`);
+            toast.error(`Registration failed:\n\n${error.errors.join('\n')}`);
           } else {
             // Handle generic errors
-            alert(`Registration failed: ${error.error || error.message}`);
+            toast.error(`Registration failed: ${error.error || error.message}`);
           }
         }
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      alert("An error occurred during registration.");
+      toast.error("An error occurred during registration.");
     } finally {
       setSubmitLoading(false);
     }
@@ -688,7 +694,7 @@ export default function Registration() {
               >
                 {canShowSubmit ? (
                   <button
-                    onClick={handleSubmit}
+                    type="submit"
                     disabled={submitLoading}
                     className="px-12 py-5 bg-gradient-to-r from-heading to-subheading text-background rounded-full text-lg font-bold tracking-wide shadow-2xl font-body hover:shadow-heading/30 hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

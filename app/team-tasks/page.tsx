@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/context/AuthContext";
 import FileUploadInfo from "@/components/FileUploadInfo";
 import CountdownTimer from "@/components/ui/CountdownTimer";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 import {
   Calendar,
   Clock,
@@ -293,7 +294,7 @@ export default function TeamTasks() {
           field_count: selectedTask.fields.length,
           has_due_date: Boolean(selectedTask.dueDate),
         });
-        alert("Task submitted successfully!");
+        toast.success("Task submitted successfully!");
         setShowSubmissionForm(false);
         setSelectedTask(null);
         setFormData({});
@@ -301,11 +302,11 @@ export default function TeamTasks() {
         await fetchTasks(); // Refresh tasks
       } else {
         const error = await response.json();
-        alert(`Failed to submit task: ${error.error}`);
+        toast.error(`Failed to submit task: ${error.error}`);
       }
     } catch (error) {
       console.error("Error submitting task:", error);
-      alert("An error occurred while submitting the task");
+      toast.error("An error occurred while submitting the task");
     } finally {
       setSubmitting(false);
     }

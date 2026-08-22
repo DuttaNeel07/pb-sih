@@ -5,6 +5,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminAuth } from "@/lib/context/AdminAuthContext";
 import { AlertCircle } from "lucide-react";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface Task {
   _id: string;
@@ -361,14 +362,14 @@ export default function TasksManagement() {
           dueTime: "",
         });
         setSelectedTeamIds(new Set()); // Clear team selection
-        alert("Task created and assigned successfully!");
+        toast.success("Task created and assigned successfully!");
       } else {
         const error = await response.json();
-        alert(`Failed to create task: ${error.message}`);
+        toast.error(`Failed to create task: ${error.message}`);
       }
     } catch (error) {
       console.error("Error creating task:", error);
-      alert("An error occurred while creating the task");
+      toast.error("An error occurred while creating the task");
     } finally {
       setSubmitting(false);
     }

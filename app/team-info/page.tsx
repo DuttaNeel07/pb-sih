@@ -40,13 +40,15 @@ interface Team {
   members: TeamMember[];
   problemStatement: ProblemStatement;
   status: string;
-  createdAt: string;
+  registrationDate?: string;
+  createdAt?: string;
 }
 
 export default function TeamInfo() {
   const { user } = useAuth();
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
+  const registrationDate = team?.registrationDate || team?.createdAt;
 
   useEffect(() => {
     const fetchTeamData = async () => {
@@ -178,7 +180,9 @@ export default function TeamInfo() {
                   Stay updated with all the latest information and announcements.
                 </p>
                 <p className="text-subheading text-sm font-body">
-                  Registration Date: {new Date(team.createdAt).toLocaleDateString()}
+                  Registration Date: {registrationDate
+                    ? new Date(registrationDate).toLocaleDateString()
+                    : "—"}
                 </p>
               </div>
             </motion.div>

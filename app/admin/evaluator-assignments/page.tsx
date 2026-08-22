@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface ProblemStatement {
   _id: string;
@@ -120,14 +121,14 @@ export default function EvaluatorAssignments() {
         await fetchAssignmentData(); // Refresh data
         setEditingEvaluator(null);
         setSelectedProblemStatements([]);
-        alert("Assignment updated successfully!");
+        toast.success("Assignment updated successfully!");
       } else {
         const errorData = await response.json();
-        alert(`Failed to update assignment: ${errorData.error}`);
+        toast.error(`Failed to update assignment: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Error updating assignment:", error);
-      alert("An error occurred while updating assignment");
+      toast.error("An error occurred while updating assignment");
     } finally {
       setSaving(false);
     }

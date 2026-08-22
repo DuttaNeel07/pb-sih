@@ -5,6 +5,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { useAdminAuth } from "@/lib/context/AdminAuthContext";
 import { AlertCircle } from "lucide-react";
 import posthog from "posthog-js";
+import toast from "react-hot-toast";
 
 interface ProblemStatement {
   _id: string;
@@ -120,15 +121,15 @@ export default function ProblemStatementsManagement() {
         posthog.capture("problem_statements_imported", {
           imported_count: result.imported,
         });
-        alert(`Successfully uploaded ${result.imported} problem statements!`);
+        toast.success(`Successfully uploaded ${result.imported} problem statements!`);
         fetchProblemStatements(); // Refresh the list
       } else {
         const error = await response.json();
-        alert(`Upload failed: ${error.message}`);
+        toast.error(`Upload failed: ${error.message}`);
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("An error occurred during upload");
+      toast.error("An error occurred during upload");
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -158,11 +159,11 @@ export default function ProblemStatementsManagement() {
         document.body.removeChild(a);
       } else {
         console.error("Failed to download template:", response.status);
-        alert("Failed to download template");
+        toast.error("Failed to download template");
       }
     } catch (error) {
       console.error("Error downloading template:", error);
-      alert("Error downloading template");
+      toast.error("Error downloading template");
     }
   };
 
