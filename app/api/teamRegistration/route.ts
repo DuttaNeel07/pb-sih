@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { verifyAuth } from "../../../lib/middleware/auth";
 import { verifyAdminAuth } from "../../../lib/middleware/adminAuth";
 import { Team, ITeamMember } from "../../../models/Team";
@@ -287,18 +287,18 @@ export async function POST(request: NextRequest) {
         };
       });
 
-      // Send confirmation email after successful transaction
-      try {
-        await sendTeamRegistrationEmail(
+      // Send confirmation email asynchronously in the background using Next.js `after`
+      // This prevents the request from blocking while ensuring the Vercel lambda doesn't terminate the promise
+      after(() => {
+        sendTeamRegistrationEmail(
           teamName,
           user.name,
           user.email,
           ps.title
-        );
-      } catch (emailError) {
-        console.error("Email sending failed:", emailError);
-        // Don't fail the registration if email fails
-      }
+        ).catch((emailError) => {
+          console.error("Email sending failed in background:", emailError);
+        });
+      });
 
       return NextResponse.json(result);
     } finally {
