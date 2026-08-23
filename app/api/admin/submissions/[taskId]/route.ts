@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminAuth } from "@/lib/middleware/adminAuth";
+import { verifySuperAdminAuth } from "@/lib/middleware/adminAuth";
 import { Task } from "@/models/Task";
 import { Team, ITaskSubmission } from "@/models/Team";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -15,7 +15,7 @@ export async function GET(
     const { taskId } = await context.params;
 
     // Verify admin authentication
-    const isAuthenticated = await verifyAdminAuth(request);
+    const isAuthenticated = await verifySuperAdminAuth(request);
     if (!isAuthenticated) {
       return NextResponse.json(
         { success: false, error: "Admin authentication required" },

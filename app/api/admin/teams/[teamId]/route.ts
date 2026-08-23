@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminAuth } from "../../../../../lib/middleware/adminAuth";
+import { verifySuperAdminAuth } from "../../../../../lib/middleware/adminAuth";
 import dbConnect from "../../../../../lib/mongodb";
 import { Team } from "../../../../../models/Team";
 import { Evaluation } from "../../../../../models/Evaluation";
@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     // Authenticate admin
-    await verifyAdminAuth(request);
+    await verifySuperAdminAuth(request);
 
     await dbConnect();
 

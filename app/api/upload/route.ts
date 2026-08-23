@@ -2,19 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "../../../lib/middleware/auth";
 import { uploadToCloudinary } from "../../../lib/utils/cloudinary";
 
+const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
+
 export async function POST(request: NextRequest) {
   try {
     // Authenticate user
-    await verifyAuth(request);
+    try {
+      await verifyAuth(request);
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
 
     const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const folder = (formData.get("folder") as string) || "sih-uploads";
+    const file = formData.get("file");
+    const requestedFolder = formData.get("folder");
+    const folder =
+      typeof requestedFolder === "string" &&
+      /^[a-zA-Z0-9/_-]{1,100}$/.test(requestedFolder)
+        ? requestedFolder
+        : "sih-uploads";
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json(
         { success: false, error: "No file provided" },
         { status: 400 }
+      );
+    }
+
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      return NextResponse.json(
+        { success: false, error: "File size must not exceed 20MB" },
+        { status: 413 }
       );
     }
 

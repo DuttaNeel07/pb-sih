@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminAuth } from "../../../../../lib/middleware/adminAuth";
+import { verifySuperAdminAuth } from "../../../../../lib/middleware/adminAuth";
 import * as XLSX from "xlsx";
 
 export async function GET(request: NextRequest) {
   try {
     // Authenticate admin
-    await verifyAdminAuth(request);
+    await verifySuperAdminAuth(request);
     // Sample data for the template
     const sampleData = [
       {

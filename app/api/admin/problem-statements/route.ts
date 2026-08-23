@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminAuth } from "../../../../lib/middleware/adminAuth";
+import { verifySuperAdminAuth } from "../../../../lib/middleware/adminAuth";
 import {
   ProblemStatement,
   IProblemStatement,
@@ -19,7 +19,7 @@ interface PSRowData {
 export async function GET(request: NextRequest) {
   try {
     // Authenticate admin
-    await verifyAdminAuth(request);
+    await verifySuperAdminAuth(request);
 
     await dbConnect();
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Authenticate admin
-    await verifyAdminAuth(request);
+    await verifySuperAdminAuth(request);
 
     await dbConnect();
 
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     // Authenticate admin
-    await verifyAdminAuth(request);
+    await verifySuperAdminAuth(request);
 
     await dbConnect();
 

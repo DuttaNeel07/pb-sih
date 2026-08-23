@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "../../../../lib/middleware/auth";
 import { User } from "../../../../models/User";
 import dbConnect from "../../../../lib/mongodb";
+import { auth as firebaseAdminAuth } from "../../../../lib/firebase-admin";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,32 +23,64 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    if (!firebaseAdminAuth) {
+      return NextResponse.json(
+        { success: false, error: "Authentication is not configured" },
+        { status: 503 }
+      );
+    }
+
+    // Verify the Firebase token directly. This endpoint provisions the local
+    // user record, so verifyAuth cannot be used here (it requires that record
+    // to already exist).
+    const decodedToken = await firebaseAdminAuth.verifyIdToken(
+      authHeader.slice("Bearer ".length).trim(),
+      true
+    );
+
     const body = await request.json();
-    const { firebaseUid, email, name } = body;
+    const { email, name } = body;
+    const verifiedEmail = decodedToken.email?.toLowerCase();
+    const requestedEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
 
     // This endpoint is called after Google OAuth to sync user with database
-    if (!firebaseUid || !email || !name) {
+    if (
+      !verifiedEmail ||
+      !requestedEmail ||
+      verifiedEmail !== requestedEmail ||
+      typeof name !== "string" ||
+      name.trim().length < 2
+    ) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
+        { success: false, error: "User identity does not match the Firebase token" },
+        { status: 403 }
       );
     }
 
     await dbConnect();
 
-    // Check if user already exists
-    let user = await User.findOne({ firebaseUid });
-
-    if (!user) {
-      // Create new team leader user
-      user = new User({
-        email: email.toLowerCase(),
-        name: name.trim(),
-        role: "leader",
-        firebaseUid,
-      });
-      await user.save();
-    }
+    // Upsert only the fields controlled by the verified identity. Do not allow
+    // callers to choose a role or another user's Firebase UID.
+    const user = await User.findOneAndUpdate(
+      { firebaseUid: decodedToken.uid },
+      {
+        $setOnInsert: {
+          email: verifiedEmail,
+          name: name.trim(),
+          role: "leader",
+          firebaseUid: decodedToken.uid,
+        },
+      },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
     return NextResponse.json({
       success: true,

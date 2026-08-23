@@ -74,6 +74,27 @@ export async function POST(
       );
     }
 
+    const submissionTaskId = new Types.ObjectId(taskId);
+    const existingSubmission = team.tasks.find(
+      (sub) => sub.taskId.toString() === taskId
+    );
+
+    // Evaluated submissions are immutable. Check before processing uploads so
+    // a rejected update cannot create new external files either.
+    if (
+      existingSubmission &&
+      (existingSubmission.status === "approved" ||
+        existingSubmission.status === "rejected")
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This submission is locked after evaluation",
+        },
+        { status: 409 }
+      );
+    }
+
     // Parse form data
     const formData = await request.formData();
     const submissionData: Record<string, string | number> = {};
@@ -217,28 +238,48 @@ export async function POST(
       }
     }
 
-    // Check if team has already submitted this task
-    const existingSubmissionIndex = team.tasks.findIndex(
-      (sub) => sub.taskId.toString() === taskId
-    );
-
     const submission = {
-      taskId: new Types.ObjectId(taskId),
+      taskId: submissionTaskId,
       submittedAt: new Date(),
       files: uploadedFiles,
       data: submissionData,
       status: "submitted" as const,
     };
 
-    if (existingSubmissionIndex >= 0) {
-      // Update existing submission
-      team.tasks[existingSubmissionIndex] = submission;
-    } else {
-      // Add new submission
-      team.tasks.push(submission);
-    }
+    // Update or insert atomically. The status predicate prevents a concurrent
+    // evaluator decision from being overwritten by a stale team request.
+    const updatedTeam = existingSubmission
+      ? await Team.findOneAndUpdate(
+          {
+            _id: team._id,
+            tasks: {
+              $elemMatch: {
+                taskId: submissionTaskId,
+                status: { $nin: ["approved", "rejected"] },
+              },
+            },
+          },
+          { $set: { "tasks.$": submission } },
+          { new: true, runValidators: true }
+        )
+      : await Team.findOneAndUpdate(
+          {
+            _id: team._id,
+            tasks: { $not: { $elemMatch: { taskId: submissionTaskId } } },
+          },
+          { $push: { tasks: submission } },
+          { new: true, runValidators: true }
+        );
 
-    await team.save();
+    if (!updatedTeam) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This submission was changed or locked while you were submitting",
+        },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
