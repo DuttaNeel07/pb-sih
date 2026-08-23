@@ -519,69 +519,82 @@ export const validateCrossTeamDuplicates = async (
       }
     });
 
-    // Check for email conflicts in existing teams (only check team members, not User collection)
-    for (const { email, type } of emailsToCheck) {
-      // Check if email exists in team members
-      const teamsWithMemberEmail = await Team.find({
-        "members.email": { $regex: new RegExp(`^${escapeRegex(email)}$`, "i") },
-      }).select("teamName");
+    const emailsList = emailsToCheck.map((e) => e.email);
+    const validPhonesToCheck = phonesToCheck.filter(({ phone }) => phone.length >= 10);
 
-      if (teamsWithMemberEmail.length > 0) {
-        const conflictingTeamNames = teamsWithMemberEmail.map(
-          (team) => team.teamName
+    // Query in parallel
+    const [teamsWithEmails, teamsWithPhones] = await Promise.all([
+      emailsList.length > 0
+        ? Team.find({ "members.email": { $in: emailsList } }).select("teamName members.email").lean()
+        : Promise.resolve([]),
+      validPhonesToCheck.length > 0
+        ? Team.find({
+            $or: validPhonesToCheck.map(({ phone }) => ({
+              "members.phone": { $regex: new RegExp(`${escapeRegex(phone)}$`) },
+            })),
+          }).select("teamName members.phone").lean()
+        : Promise.resolve([]),
+    ]);
+
+    // Check email conflicts in memory
+    if (teamsWithEmails.length > 0) {
+      for (const { email, type } of emailsToCheck) {
+        const matchingTeams = teamsWithEmails.filter((team) =>
+          team.members?.some((m) => m.email?.toLowerCase().trim() === email)
         );
-        emailConflicts.push({
-          email: email,
-          conflictingTeams: conflictingTeamNames,
-          memberType: type,
-        });
 
-        const teamsList =
-          conflictingTeamNames.length === 1
-            ? `team "${conflictingTeamNames[0]}"`
-            : `teams: ${conflictingTeamNames
-                .map((name) => `"${name}"`)
-                .join(", ")}`;
+        if (matchingTeams.length > 0) {
+          const conflictingTeamNames = matchingTeams.map((t) => t.teamName);
+          emailConflicts.push({
+            email,
+            conflictingTeams: conflictingTeamNames,
+            memberType: type,
+          });
 
-        errors.push(
-          `${
-            type.charAt(0).toUpperCase() + type.slice(1)
-          } email "${email}" is already used as team member in ${teamsList}`
-        );
+          const teamsList =
+            conflictingTeamNames.length === 1
+              ? `team "${conflictingTeamNames[0]}"`
+              : `teams: ${conflictingTeamNames.map((name) => `"${name}"`).join(", ")}`;
+
+          errors.push(
+            `${
+              type.charAt(0).toUpperCase() + type.slice(1)
+            } email "${email}" is already used as team member in ${teamsList}`
+          );
+        }
       }
     }
 
-    // Check for phone conflicts in existing teams (only check team members, not User collection)
-    for (const { phone, type } of phonesToCheck) {
-      if (phone.length < 10) continue; // Skip invalid phone numbers
-
-      // Check if phone exists in team members
-      const teamsWithMemberPhone = await Team.find({
-        "members.phone": { $regex: new RegExp(`${escapeRegex(phone)}$`) },
-      }).select("teamName");
-
-      if (teamsWithMemberPhone.length > 0) {
-        const conflictingTeamNames = teamsWithMemberPhone.map(
-          (team) => team.teamName
+    // Check phone conflicts in memory
+    if (teamsWithPhones.length > 0) {
+      for (const { phone, type } of validPhonesToCheck) {
+        const matchingTeams = teamsWithPhones.filter((team) =>
+          team.members?.some((m) => {
+            const dbPhoneCleaned = m.phone?.replace(/\D/g, "");
+            return dbPhoneCleaned && dbPhoneCleaned.length >= 10 && phone && 
+                   (dbPhoneCleaned.endsWith(phone) || phone.endsWith(dbPhoneCleaned));
+          })
         );
-        phoneConflicts.push({
-          phone: phone,
-          conflictingTeams: conflictingTeamNames,
-          memberType: type,
-        });
 
-        const teamsList =
-          conflictingTeamNames.length === 1
-            ? `team "${conflictingTeamNames[0]}"`
-            : `teams: ${conflictingTeamNames
-                .map((name) => `"${name}"`)
-                .join(", ")}`;
+        if (matchingTeams.length > 0) {
+          const conflictingTeamNames = matchingTeams.map((t) => t.teamName);
+          phoneConflicts.push({
+            phone,
+            conflictingTeams: conflictingTeamNames,
+            memberType: type,
+          });
 
-        errors.push(
-          `${
-            type.charAt(0).toUpperCase() + type.slice(1)
-          } phone "${phone}" is already used as team member in ${teamsList}`
-        );
+          const teamsList =
+            conflictingTeamNames.length === 1
+              ? `team "${conflictingTeamNames[0]}"`
+              : `teams: ${conflictingTeamNames.map((name) => `"${name}"`).join(", ")}`;
+
+          errors.push(
+            `${
+              type.charAt(0).toUpperCase() + type.slice(1)
+            } phone "${phone}" is already used as team member in ${teamsList}`
+          );
+        }
       }
     }
 
