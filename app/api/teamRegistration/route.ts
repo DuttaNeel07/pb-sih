@@ -13,9 +13,25 @@ import {
 } from "../../../lib/utils/validation";
 import { sendTeamRegistrationEmail } from "../../../lib/utils/email";
 import mongoose from "mongoose";
+import {
+  formatRegistrationStartAt,
+  getRegistrationStartAt,
+  isRegistrationOpen,
+} from "../../../lib/registration";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isRegistrationOpen()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Registration opens at ${formatRegistrationStartAt()}`,
+          registrationStartAt: getRegistrationStartAt(),
+        },
+        { status: 403 }
+      );
+    }
+
     await dbConnect();
 
     // Check if user is currently logged in as admin

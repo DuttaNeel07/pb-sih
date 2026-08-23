@@ -64,3 +64,15 @@ Building this platform provided hands-on experience with:
 ## 📝 License
 
 Add license information here if applicable.
+
+## Registration opening time
+
+Set `NEXT_PUBLIC_REGISTRATION_START_AT` in the deployment environment using an
+ISO-8601 timestamp with its timezone offset, for example:
+
+```env
+NEXT_PUBLIC_REGISTRATION_START_AT=2026-08-24T21:00:00+05:30
+```
+
+The same value controls the frontend countdown and backend registration gate.
+If it is not set, the portal defaults to **24 August 2026 at 9:00 PM IST**.
