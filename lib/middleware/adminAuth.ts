@@ -50,6 +50,10 @@ export async function verifyAdminAuth(
       throw new Error("Admin not found");
     }
 
+    if (!admin.isActive) {
+      throw new Error("Admin account is inactive");
+    }
+
     const authenticatedRequest = request as AdminAuthenticatedRequest;
     authenticatedRequest.admin = {
       _id: admin._id.toString(),
