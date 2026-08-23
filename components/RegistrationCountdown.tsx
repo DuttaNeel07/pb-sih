@@ -76,7 +76,7 @@ export default function RegistrationCountdown({
           Get ready to register your team
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-gray-400 sm:text-base">
-          Registrations open sharply at 9:00 PM IST. Keep this page open and
+          Registrations open sharply at 11:59 PM IST. Keep this page open and
           be ready when the countdown reaches zero.
         </p>
 
