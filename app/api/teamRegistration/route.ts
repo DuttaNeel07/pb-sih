@@ -10,6 +10,9 @@ import {
   validateTeamMember,
   validateCrossTeamDuplicates,
   escapeRegex,
+  isValidObjectId,
+  sanitizeSingleLineText,
+  sanitizeTeamMemberInput,
 } from "../../../lib/utils/validation";
 import { sendTeamRegistrationEmail } from "../../../lib/utils/email";
 import mongoose from "mongoose";
@@ -80,7 +83,31 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { teamName, problemStatement, teamLeader, members } = body;
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid registration payload" },
+        { status: 400 }
+      );
+    }
+
+    const rawBody = body as Record<string, unknown>;
+    const teamName = sanitizeSingleLineText(rawBody.teamName, 10000);
+    const problemStatement =
+      typeof rawBody.problemStatement === "string"
+        ? rawBody.problemStatement.trim()
+        : "";
+    const sanitizedLeader = rawBody.teamLeader
+      ? sanitizeTeamMemberInput(rawBody.teamLeader)
+      : undefined;
+    const teamLeader = sanitizedLeader
+      ? {
+          ...sanitizedLeader,
+          college:
+            sanitizedLeader.college ||
+            "Dayananda Sagar College of Engineering",
+        }
+      : undefined;
+    const rawMembers = Array.isArray(rawBody.members) ? rawBody.members : [];
 
     // Validate team leader data if provided
     if (teamLeader) {
@@ -120,31 +147,16 @@ export async function POST(request: NextRequest) {
     const teamMembers: ITeamMember[] = [];
 
     // Add other members (should be exactly 5 members)
-    if (members && Array.isArray(members)) {
-      // Filter out members with invalid/empty data and only take first 5
-      const validMembers = members.filter(
-        (member) =>
-          member.name &&
-          member.email &&
-          member.phone &&
-          member.gender &&
-          member.gender.trim() !== ""
-      );
-
-      const membersToAdd = validMembers.slice(0, 5);
-
-      membersToAdd.forEach((member) => {
-        teamMembers.push({
-          name: member.name,
-          email: member.email,
-          phone: member.phone,
-          college: member.college || "Dayananda Sagar College of Engineering", // Default college
-          year: member.year,
-          branch: member.branch,
-          gender: member.gender?.toLowerCase() as "male" | "female" | "other", // Normalize case
-        });
+    // Keep an extra item so validation rejects payloads with more than five
+    // members instead of silently dropping attacker-controlled input.
+    rawMembers.slice(0, 6).forEach((member) => {
+      const sanitizedMember = sanitizeTeamMemberInput(member);
+      teamMembers.push({
+        ...sanitizedMember,
+        college:
+          sanitizedMember.college || "Dayananda Sagar College of Engineering",
       });
-    }
+    });
 
     // Check for duplicate emails between leader and members
     if (teamLeader && teamMembers.length > 0) {
@@ -180,6 +192,13 @@ export async function POST(request: NextRequest) {
           errors: validation.errors,
           error: "Validation failed",
         },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidObjectId(problemStatement)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid problem statement" },
         { status: 400 }
       );
     }
@@ -349,7 +368,6 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: "Failed to register team",
-        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

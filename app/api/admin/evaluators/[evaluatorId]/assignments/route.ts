@@ -2,13 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAuth } from "@/lib/middleware/adminAuth";
 import { Admin } from "@/models/Admin";
 import dbConnect from "@/lib/mongodb";
+import { isValidObjectId } from "@/lib/utils/validation";
 
 // GET /api/admin/evaluators/[evaluatorId]/assignments - Get specific evaluator's assignments
 export async function GET(
   request: NextRequest,
-  { params }: { params: { evaluatorId: string } }
+  { params }: { params: Promise<{ evaluatorId: string }> }
 ) {
   try {
+    const { evaluatorId } = await params;
+
+    if (!isValidObjectId(evaluatorId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid evaluator ID" },
+        { status: 400 }
+      );
+    }
+
     // Verify admin authentication
     const authenticatedRequest = await verifyAdminAuth(request);
 
@@ -25,7 +35,6 @@ export async function GET(
     // Allow access if:
     // 1. Current user is super admin (can view any evaluator's assignments)
     // 2. Current user is the evaluator requesting their own assignments
-    const { evaluatorId } = params;
     if (
       currentAdmin.role !== "super-admin" &&
       currentAdmin._id.toString() !== evaluatorId

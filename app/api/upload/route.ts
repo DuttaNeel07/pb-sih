@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "../../../lib/middleware/auth";
 import { uploadToCloudinary } from "../../../lib/utils/cloudinary";
+import { sanitizeSingleLineText } from "../../../lib/utils/validation";
 
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
 
@@ -32,9 +33,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    const safeFileName = sanitizeSingleLineText(file.name, 255);
+    if (
+      !safeFileName ||
+      safeFileName.includes("/") ||
+      safeFileName.includes("\\")
+    ) {
       return NextResponse.json(
-        { success: false, error: "File size must not exceed 20MB" },
+        { success: false, error: "Invalid file name" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      !Number.isFinite(file.size) ||
+      file.size <= 0 ||
+      file.size > MAX_UPLOAD_SIZE_BYTES
+    ) {
+      return NextResponse.json(
+        { success: false, error: "File size must be greater than 0 and no more than 20MB" },
         { status: 413 }
       );
     }

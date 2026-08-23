@@ -8,7 +8,11 @@ import { DeletedTeam } from "../../../../models/DeletedTeam";
 import { auth as firebaseAdmin } from "../../../../lib/firebase-admin";
 // import { sendEmail } from "../../../../lib/utils/email";
 import mongoose from "mongoose";
-import { escapeRegex } from "../../../../lib/utils/validation";
+import {
+  escapeRegex,
+  isValidObjectId,
+  sanitizeSingleLineText,
+} from "../../../../lib/utils/validation";
 
 // Import models to ensure they are registered with Mongoose
 import "../../../../models/User";
@@ -22,10 +26,32 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     const url = new URL(request.url);
-    const status = url.searchParams.get("status");
-    const search = url.searchParams.get("search");
-    const page = parseInt(url.searchParams.get("page") || "1");
-    const limit = parseInt(url.searchParams.get("limit") || "10");
+    const requestedStatus = url.searchParams.get("status");
+    const requestedSearch = url.searchParams.get("search");
+    const validStatuses = [
+      "registered",
+      "selected",
+      "waitlisted",
+      "rejected",
+      "finalist",
+    ];
+    const status =
+      requestedStatus && validStatuses.includes(requestedStatus)
+        ? requestedStatus
+        : requestedStatus === "all" || !requestedStatus
+          ? null
+          : "invalid";
+    const search = requestedSearch
+      ? sanitizeSingleLineText(requestedSearch, 100)
+      : "";
+    const requestedPage = Number(url.searchParams.get("page") || "1");
+    const requestedLimit = Number(url.searchParams.get("limit") || "10");
+    const page = Number.isInteger(requestedPage) && requestedPage >= 1
+      ? Math.min(requestedPage, 100000)
+      : 1;
+    const limit = Number.isInteger(requestedLimit) && requestedLimit >= 1
+      ? Math.min(requestedLimit, 100)
+      : 10;
     const all = url.searchParams.get("all") === "true";
     const skip = (page - 1) * limit;
 
@@ -59,7 +85,14 @@ export async function GET(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const matchConditions: any = {};
 
-    if (status && status !== "all") {
+    if (status === "invalid") {
+      return NextResponse.json(
+        { success: false, error: "Invalid team status filter" },
+        { status: 400 }
+      );
+    }
+
+    if (status) {
       matchConditions.status = status;
     }
 
@@ -142,9 +175,15 @@ export async function PUT(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { teamId, status } = body;
 
-    if (!teamId || !status) {
+    if (!isValidObjectId(teamId) || !status) {
       return NextResponse.json(
         { success: false, error: "Team ID and status are required" },
         { status: 400 }
@@ -201,9 +240,15 @@ export async function DELETE(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { teamId } = body;
 
-    if (!teamId) {
+    if (!isValidObjectId(teamId)) {
       return NextResponse.json(
         { success: false, error: "Team ID is required" },
         { status: 400 }

@@ -6,6 +6,14 @@ import {
 } from "../../../../models/ProblemStatement";
 import dbConnect from "../../../../lib/mongodb";
 import * as XLSX from "xlsx";
+import {
+  isValidObjectId,
+  sanitizeSingleLineText,
+  sanitizeText,
+  validateURL,
+} from "../../../../lib/utils/validation";
+
+const MAX_PROBLEM_STATEMENT_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 interface PSRowData {
   psNumber: string;
@@ -60,17 +68,25 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json(
         { success: false, error: "No file uploaded" },
         { status: 400 }
       );
     }
 
+    if (file.size <= 0 || file.size > MAX_PROBLEM_STATEMENT_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { success: false, error: "File must be greater than 0 and no more than 20MB" },
+        { status: 413 }
+      );
+    }
+
     // Check file format
-    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".csv")) {
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".csv")) {
       return NextResponse.json(
         { success: false, error: "File must be .xlsx or .csv format" },
         { status: 400 }
@@ -81,31 +97,59 @@ export async function POST(request: NextRequest) {
     const workbook = XLSX.read(buffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet) as PSRowData[];
+    if (!sheetName || !worksheet) {
+      return NextResponse.json(
+        { success: false, error: "File does not contain a readable worksheet" },
+        { status: 400 }
+      );
+    }
+    const data = XLSX.utils.sheet_to_json(worksheet) as unknown[];
 
-    if (!data || data.length === 0) {
+    if (!data || data.length === 0 || data.length > 5000) {
       return NextResponse.json(
         { success: false, error: "File is empty or invalid" },
         { status: 400 }
       );
     }
 
-    // Validate data structure
-    const requiredFields = [
-      "psNumber",
-      "title",
-      "description",
-      "domain",
-      "link",
-    ];
     const errors: string[] = [];
+    const normalizedData: PSRowData[] = [];
 
-    data.forEach((row: PSRowData, index: number) => {
-      requiredFields.forEach((field) => {
-        const value = row[field as keyof PSRowData];
-        if (!value || String(value).trim() === "") {
-          errors.push(`Row ${index + 1}: Missing ${field}`);
-        }
+    data.forEach((rawRow: unknown, index: number) => {
+      const row =
+        rawRow !== null && typeof rawRow === "object" && !Array.isArray(rawRow)
+          ? (rawRow as Record<string, unknown>)
+          : {};
+      const psNumber = sanitizeSingleLineText(row.psNumber, 50);
+      const title = sanitizeSingleLineText(row.title, 300);
+      const description = sanitizeText(row.description, 10000);
+      const domain = sanitizeSingleLineText(row.domain, 20);
+      const link = sanitizeSingleLineText(row.link, 2048);
+      const maxTeams =
+        row.maxTeams === undefined || row.maxTeams === ""
+          ? 3
+          : Number(row.maxTeams);
+
+      if (!psNumber) errors.push(`Row ${index + 1}: Missing psNumber`);
+      if (!title) errors.push(`Row ${index + 1}: Missing title`);
+      if (!description) errors.push(`Row ${index + 1}: Missing description`);
+      if (domain !== "Hardware" && domain !== "Software") {
+        errors.push(`Row ${index + 1}: Domain must be Hardware or Software`);
+      }
+      if (!link || !validateURL(link)) {
+        errors.push(`Row ${index + 1}: Link must be a valid URL`);
+      }
+      if (!Number.isInteger(maxTeams) || maxTeams < 1 || maxTeams > 100000) {
+        errors.push(`Row ${index + 1}: maxTeams must be between 1 and 100000`);
+      }
+
+      normalizedData.push({
+        psNumber,
+        title,
+        description,
+        domain: domain as PSRowData["domain"],
+        link,
+        maxTeams,
       });
     });
 
@@ -114,7 +158,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for duplicate PS numbers
-    const psNumbers = data.map((row: PSRowData) => String(row.psNumber).trim());
+    const psNumbers = normalizedData.map((row) => row.psNumber);
     const duplicatePsNumbers = psNumbers.filter(
       (item, pos) => psNumbers.indexOf(item) !== pos
     );
@@ -148,13 +192,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create problem statements
-    const problemStatements = data.map((row: PSRowData) => ({
-      psNumber: String(row.psNumber).trim(),
-      title: String(row.title).trim(),
-      description: String(row.description).trim(),
-      domain: String(row.domain).trim(),
-      link: String(row.link).trim(),
-      maxTeams: row.maxTeams ? parseInt(String(row.maxTeams)) : 3,
+    const problemStatements = normalizedData.map((row) => ({
+      psNumber: row.psNumber,
+      title: row.title,
+      description: row.description,
+      domain: row.domain,
+      link: row.link,
+      maxTeams: row.maxTeams || 3,
       isActive: true,
       teamCount: 0,
     }));
@@ -184,9 +228,15 @@ export async function PUT(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { psId, isActive } = body;
 
-    if (!psId || typeof isActive !== "boolean") {
+    if (!isValidObjectId(psId) || typeof isActive !== "boolean") {
       return NextResponse.json(
         { success: false, error: "PS ID and isActive status are required" },
         { status: 400 }

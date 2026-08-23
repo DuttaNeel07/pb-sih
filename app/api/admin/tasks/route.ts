@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySuperAdminAuth } from "../../../../lib/middleware/adminAuth";
-import { Task, ITask } from "../../../../models/Task";
+import { Task, ITask, ITaskField } from "../../../../models/Task";
 import { Team } from "../../../../models/Team";
 import dbConnect from "../../../../lib/mongodb";
 import { sendTaskAssignmentEmail } from "../../../../lib/utils/email";
 import { Types } from "mongoose";
+import {
+  isValidObjectId,
+  sanitizeSingleLineText,
+  sanitizeText,
+} from "../../../../lib/utils/validation";
 // Import User model to ensure it's registered for population
 import "../../../../models/User";
 
@@ -16,6 +21,80 @@ interface PopulatedTeam {
     name: string;
     email: string;
   };
+}
+
+const TASK_FIELD_TYPES = [
+  "text",
+  "textarea",
+  "file",
+  "url",
+  "number",
+  "date",
+] as const;
+
+function sanitizeTaskFields(value: unknown): ITaskField[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 50) {
+    return null;
+  }
+
+  const fields: ITaskField[] = [];
+  const labels = new Set<string>();
+  for (const rawField of value) {
+    if (
+      rawField === null ||
+      typeof rawField !== "object" ||
+      Array.isArray(rawField)
+    ) {
+      return null;
+    }
+
+    const field = rawField as Record<string, unknown>;
+    const type = sanitizeSingleLineText(field.type, 20);
+    const label = sanitizeSingleLineText(field.label, 200);
+    const acceptedFormats = Array.isArray(field.acceptedFormats)
+      ? field.acceptedFormats
+          .slice(0, 20)
+          .filter((format): format is string => typeof format === "string")
+          .map((format) => sanitizeSingleLineText(format, 20).toLowerCase())
+          .filter((format) => /^[a-z0-9]+$/.test(format))
+      : undefined;
+    const maxSize = field.maxSize === undefined ? undefined : Number(field.maxSize);
+    const maxLength =
+      field.maxLength === undefined ? undefined : Number(field.maxLength);
+
+    if (
+      !(TASK_FIELD_TYPES as readonly string[]).includes(type) ||
+      label.length < 1 ||
+      label.includes(".") ||
+      label.startsWith("$") ||
+      labels.has(label) ||
+      (maxSize !== undefined && (!Number.isFinite(maxSize) || maxSize < 0.001 || maxSize > 100)) ||
+      (maxLength !== undefined && (!Number.isInteger(maxLength) || maxLength < 1 || maxLength > 10000))
+    ) {
+      return null;
+    }
+
+    labels.add(label);
+
+    fields.push({
+      type: type as ITaskField["type"],
+      label,
+      required: field.required === true,
+      placeholder:
+        typeof field.placeholder === "string"
+          ? sanitizeSingleLineText(field.placeholder, 500)
+          : undefined,
+      acceptedFormats,
+      maxSize,
+      maxLength,
+      description:
+        typeof field.description === "string"
+          ? sanitizeText(field.description, 2000)
+          : undefined,
+    });
+  }
+
+  return fields;
 }
 
 export async function GET(request: NextRequest) {
@@ -71,10 +150,29 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { title, description, fields, assignedTo, dueDate } = body;
+    const normalizedTitle = sanitizeSingleLineText(title, 200);
+    const normalizedDescription =
+      typeof description === "string" ? sanitizeText(description, 5000) : undefined;
+    const normalizedFields = sanitizeTaskFields(fields);
+    const normalizedAssignedTo = Array.isArray(assignedTo)
+      ? assignedTo
+      : assignedTo === undefined
+        ? []
+        : null;
+    const normalizedDueDate =
+      dueDate === undefined || dueDate === null || dueDate === ""
+        ? undefined
+        : new Date(dueDate);
 
     // Validate required fields
-    if (!title || !fields || !Array.isArray(fields)) {
+    if (!normalizedTitle || !normalizedFields) {
       return NextResponse.json(
         {
           success: false,
@@ -84,18 +182,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (fields.length === 0) {
+    if (
+      !normalizedAssignedTo ||
+      normalizedAssignedTo.length > 100 ||
+      normalizedAssignedTo.some((teamId) => !isValidObjectId(teamId)) ||
+      new Set(normalizedAssignedTo).size !== normalizedAssignedTo.length
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Invalid team assignments" },
+        { status: 400 }
+      );
+    }
+
+    if (normalizedFields.length === 0) {
       return NextResponse.json(
         { success: false, error: "At least one field is required" },
         { status: 400 }
       );
     }
 
+    if (normalizedDueDate && Number.isNaN(normalizedDueDate.getTime())) {
+      return NextResponse.json(
+        { success: false, error: "Invalid due date" },
+        { status: 400 }
+      );
+    }
+
     // Validate assignedTo teams
     let teamsToAssign: PopulatedTeam[] = [];
-    if (assignedTo && assignedTo.length > 0) {
+    if (normalizedAssignedTo.length > 0) {
       const teams = await Team.find({
-        _id: { $in: assignedTo },
+        _id: { $in: normalizedAssignedTo },
       }).populate("leader", "name email");
 
       teamsToAssign = teams.map((team) => {
@@ -115,7 +232,7 @@ export async function POST(request: NextRequest) {
         };
       });
 
-      if (teamsToAssign.length !== assignedTo.length) {
+      if (teamsToAssign.length !== normalizedAssignedTo.length) {
         return NextResponse.json(
           { success: false, error: "Some teams not found" },
           { status: 400 }
@@ -125,11 +242,11 @@ export async function POST(request: NextRequest) {
 
     // Create task
     const task = new Task({
-      title: title.trim(),
-      description: description ? description.trim() : undefined,
-      fields,
-      assignedTo: assignedTo || [],
-      dueDate: dueDate ? new Date(dueDate) : undefined,
+      title: normalizedTitle,
+      description: normalizedDescription,
+      fields: normalizedFields,
+      assignedTo: normalizedAssignedTo,
+      dueDate: normalizedDueDate,
       isActive: true,
       createdBy: new Types.ObjectId(), // Use a placeholder ObjectId for now
     });
@@ -185,9 +302,15 @@ export async function PUT(request: NextRequest) {
     await dbConnect();
 
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { taskId, isActive } = body;
 
-    if (!taskId || typeof isActive !== "boolean") {
+    if (!isValidObjectId(taskId) || typeof isActive !== "boolean") {
       return NextResponse.json(
         { success: false, error: "Task ID and isActive status are required" },
         { status: 400 }

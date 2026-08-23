@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAuth } from "@/lib/middleware/adminAuth";
 import dbConnect from "@/lib/mongodb";
+import {
+  isValidObjectId,
+  sanitizeText,
+} from "@/lib/utils/validation";
 
 // Import models after database connection to avoid registration issues
 
@@ -11,6 +15,13 @@ export async function GET(
 ) {
   try {
     const { problemStatementId } = await context.params;
+
+    if (!isValidObjectId(problemStatementId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid problem statement ID" },
+        { status: 400 }
+      );
+    }
 
     // Verify admin authentication
     const authenticatedRequest = await verifyAdminAuth(request);
@@ -23,8 +34,6 @@ export async function GET(
     const { Evaluation } = await import("@/models/Evaluation");
     const { ProblemStatement } = await import("@/models/ProblemStatement");
     const { PptEvaluation } = await import("@/models/PptEvaluations");
-    const { Task } = await import("@/models/Task");
-    const { User } = await import("@/models/User");
 
     // Get the current evaluator
     const evaluator = await Admin.findById(authenticatedRequest.admin?._id);
@@ -171,6 +180,13 @@ export async function POST(
   try {
     const { problemStatementId } = await context.params;
 
+    if (!isValidObjectId(problemStatementId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid problem statement ID" },
+        { status: 400 }
+      );
+    }
+
     // Verify admin authentication
     const authenticatedRequest = await verifyAdminAuth(request);
 
@@ -180,9 +196,6 @@ export async function POST(
     const { Admin } = await import("@/models/Admin");
     const { Team } = await import("@/models/Team");
     const { Evaluation } = await import("@/models/Evaluation");
-    const { ProblemStatement } = await import("@/models/ProblemStatement");
-    const { Task } = await import("@/models/Task");
-    const { User } = await import("@/models/User");
 
     // Get the current evaluator
     const evaluator = await Admin.findById(authenticatedRequest.admin?._id);
@@ -209,18 +222,88 @@ export async function POST(
       );
     }
 
-    const { rankings, isFinalized } = await request.json();
+    const body = await request.json();
+    const rankings = body?.rankings;
+    const isFinalized = body?.isFinalized;
 
     // Validate rankings
-    if (!Array.isArray(rankings) || rankings.length === 0) {
+    if (
+      !Array.isArray(rankings) ||
+      rankings.length === 0 ||
+      rankings.length > 1000 ||
+      (isFinalized !== undefined && typeof isFinalized !== "boolean")
+    ) {
       return NextResponse.json(
         { success: false, error: "Rankings array is required" },
         { status: 400 }
       );
     }
 
+    const normalizedRankings = rankings.map((ranking: unknown) => {
+      if (
+        ranking === null ||
+        typeof ranking !== "object" ||
+        Array.isArray(ranking)
+      ) {
+        return null;
+      }
+
+      const value = ranking as Record<string, unknown>;
+      const rank = value.rank;
+      const score = value.score === undefined || value.score === null
+        ? undefined
+        : Number(value.score);
+      const comments =
+        value.comments === undefined || value.comments === null
+          ? undefined
+          : sanitizeText(value.comments, 1000);
+
+      if (
+        !isValidObjectId(value.teamId) ||
+        typeof rank !== "number" ||
+        !Number.isInteger(rank) ||
+        rank < 1 ||
+        (score !== undefined && (!Number.isFinite(score) || score < 0 || score > 100)) ||
+        (value.comments !== undefined && value.comments !== null && typeof value.comments !== "string")
+      ) {
+        return null;
+      }
+
+      return {
+        teamId: value.teamId,
+        rank,
+        score,
+        comments,
+      };
+    });
+
+    if (normalizedRankings.some((ranking) => ranking === null)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid ranking data" },
+        { status: 400 }
+      );
+    }
+
+    const safeRankings = normalizedRankings as Array<{
+      teamId: string;
+      rank: number;
+      score?: number;
+      comments?: string;
+    }>;
+    const ranks = safeRankings.map((ranking) => ranking.rank).sort((a, b) => a - b);
+    const teamIds = safeRankings.map((ranking) => ranking.teamId);
+
+    if (
+      new Set(ranks).size !== ranks.length ||
+      new Set(teamIds).size !== teamIds.length
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Duplicate teams or ranks are not allowed" },
+        { status: 400 }
+      );
+    }
+
     // Validate ranking structure
-    const ranks = rankings.map((r) => r.rank).sort((a, b) => a - b);
     for (let i = 0; i < ranks.length; i++) {
       if (ranks[i] !== i + 1) {
         return NextResponse.json(
@@ -234,7 +317,6 @@ export async function POST(
     }
 
     // Verify all teams exist and belong to this problem statement
-    const teamIds = rankings.map((r) => r.teamId);
     const teams = await Team.find({
       _id: { $in: teamIds },
       problemStatement: problemStatementId,
@@ -249,7 +331,7 @@ export async function POST(
     }
 
     // Prepare ranking data
-    const rankingData = rankings.map((r) => ({
+    const rankingData = safeRankings.map((r) => ({
       teamId: r.teamId,
       rank: r.rank,
       score: r.score || undefined,

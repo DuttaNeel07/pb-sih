@@ -2,14 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import { Admin } from "@/models/Admin";
 import jwt from "jsonwebtoken";
+import { sanitizeEmail } from "@/lib/utils/validation";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { email, password } = body;
+    const normalizedEmail = sanitizeEmail(email);
 
     // Validate required fields
-    if (!email || !password) {
+    if (
+      !normalizedEmail ||
+      typeof password !== "string" ||
+      password.length === 0 ||
+      password.length > 128
+    ) {
       return NextResponse.json(
         { success: false, error: "Email and password are required" },
         { status: 400 }
@@ -20,7 +33,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     // Find admin by email
-    const admin = await Admin.findOne({ email: email.toLowerCase() });
+    const admin = await Admin.findOne({ email: normalizedEmail });
     if (!admin) {
       return NextResponse.json(
         { success: false, error: "Invalid email or password" },
