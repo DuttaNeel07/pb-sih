@@ -159,6 +159,10 @@ const teamSchema = new Schema<ITeam>(
   }
 );
 
+// A leader may own at most one team. This database-level constraint closes
+// the race between concurrent registration requests for the same user.
+teamSchema.index({ leader: 1 }, { unique: true });
+
 // Custom validation for gender diversity
 teamSchema.pre("save", async function (next) {
   try {

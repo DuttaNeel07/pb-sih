@@ -64,3 +64,16 @@ export async function verifyAdminAuth(
     throw new Error("Admin authentication failed");
   }
 }
+
+/** Verify a token belongs to an active super-admin, not merely any admin. */
+export async function verifySuperAdminAuth(
+  request: NextRequest
+): Promise<AdminAuthenticatedRequest> {
+  const authenticatedRequest = await verifyAdminAuth(request);
+
+  if (authenticatedRequest.admin?.role !== "super-admin") {
+    throw new Error("Super admin access required");
+  }
+
+  return authenticatedRequest;
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminAuth } from "@/lib/middleware/adminAuth";
+import { verifySuperAdminAuth } from "@/lib/middleware/adminAuth";
 import { Team } from "@/models/Team";
 import { sendEmail } from "@/lib/utils/email";
 import dbConnect from "@/lib/mongodb";
@@ -13,7 +13,7 @@ export async function PATCH(
     const { teamId } = await context.params;
 
     // Verify admin authentication
-    const isAuthenticated = await verifyAdminAuth(request);
+    const isAuthenticated = await verifySuperAdminAuth(request);
     if (!isAuthenticated) {
       return NextResponse.json(
         { success: false, error: "Admin authentication required" },

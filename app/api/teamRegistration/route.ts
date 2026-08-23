@@ -9,6 +9,7 @@ import {
   validateTeamRegistration,
   validateTeamMember,
   validateCrossTeamDuplicates,
+  escapeRegex,
 } from "../../../lib/utils/validation";
 import { sendTeamRegistrationEmail } from "../../../lib/utils/email";
 import mongoose from "mongoose";
@@ -169,7 +170,9 @@ export async function POST(request: NextRequest) {
 
     // Check if team name is unique
     const existingTeamName = await Team.findOne({
-      teamName: { $regex: new RegExp("^" + teamName.trim() + "$", "i") },
+      teamName: {
+        $regex: new RegExp(`^${escapeRegex(teamName.trim())}$`, "i"),
+      },
     });
     if (existingTeamName) {
       return NextResponse.json(
@@ -205,17 +208,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check problem statement availability
-    const ps = await ProblemStatement.findById(problemStatement);
+    const ps = await ProblemStatement.findById(problemStatement).select("title");
     if (!ps) {
       return NextResponse.json(
         { success: false, error: "Invalid problem statement" },
-        { status: 400 }
-      );
-    }
-
-    if (!ps.isActive || ps.teamCount >= ps.maxTeams) {
-      return NextResponse.json(
-        { success: false, error: "Problem statement is no longer available" },
         { status: 400 }
       );
     }
@@ -227,6 +223,24 @@ export async function POST(request: NextRequest) {
 
     try {
       await session.withTransaction(async () => {
+        // Claim a slot atomically. A read followed by an unconditional
+        // increment allows concurrent registrations to exceed maxTeams.
+        const claimedProblemStatement = await ProblemStatement.findOneAndUpdate(
+          {
+            _id: problemStatement,
+            isActive: true,
+            $expr: { $lt: ["$teamCount", "$maxTeams"] },
+          },
+          { $inc: { teamCount: 1 } },
+          { new: true, session }
+        );
+
+        if (!claimedProblemStatement) {
+          const error = new Error("Problem statement is no longer available");
+          error.name = "ProblemStatementUnavailable";
+          throw error;
+        }
+
         // Update user with leader details if provided
         if (teamLeader) {
           await User.findByIdAndUpdate(
@@ -257,13 +271,6 @@ export async function POST(request: NextRequest) {
         });
 
         await team.save({ session });
-
-        // Update problem statement team count
-        await ProblemStatement.findByIdAndUpdate(
-          problemStatement,
-          { $inc: { teamCount: 1 } },
-          { session }
-        );
 
         // Update user's team reference
         await User.findByIdAndUpdate(user._id, { team: team._id }, { session });
@@ -299,6 +306,28 @@ export async function POST(request: NextRequest) {
     }
   } catch (error: unknown) {
     console.error("Team registration error:", error);
+
+    if (error instanceof Error && error.name === "ProblemStatementUnavailable") {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 400 }
+      );
+    }
+
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: unknown }).code === 11000
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "You or this team name is already registered",
+        },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json(
       {

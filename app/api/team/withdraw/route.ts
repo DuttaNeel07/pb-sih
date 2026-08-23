@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
       branch?: string;
       firebaseUid?: string;
     };
+    const firebaseUidToDelete = leader.firebaseUid;
 
     // Double-check that the team leader's ID matches the authenticated user's ID
     if (leader._id.toString() !== user._id.toString()) {
@@ -153,31 +154,21 @@ export async function POST(request: NextRequest) {
 
     await deletedTeamData.save({ session });
 
-    // Step 2: Delete Firebase account if exists
-    if (leader.firebaseUid && firebaseAdmin) {
-      try {
-        await firebaseAdmin.deleteUser(leader.firebaseUid);
-      } catch (firebaseError) {
-        console.error("Failed to delete Firebase account:", firebaseError);
-        await session.abortTransaction();
-        return NextResponse.json(
-          { success: false, error: "Failed to delete Firebase account" },
-          { status: 500 }
-        );
-      }
-    }
+    // Firebase is an external system and cannot participate in this MongoDB
+    // transaction. Delete database state first and clean up Firebase after
+    // commit so an external failure cannot leave a half-applied transaction.
 
-    // Step 3: Delete User document
+    // Step 2: Delete User document
     await User.findByIdAndDelete(leader._id).session(session);
 
-    // Step 4: Decrease team count in problem statement
+    // Step 3: Decrease team count in problem statement
     await ProblemStatement.findByIdAndUpdate(
       problemStatement._id,
       { $inc: { teamCount: -1 } },
       { session }
     );
 
-    // Step 5: Delete Team document
+    // Step 4: Delete Team document
     await Team.findByIdAndDelete(team._id).session(session);
 
     // Step 6: Send email notification to leader (commented out for now)
@@ -231,15 +222,30 @@ export async function POST(request: NextRequest) {
     }
     */
 
-    // Commit the transaction
+    // Commit the database transaction before performing external side effects.
     await session.commitTransaction();
     console.log("✅ Transaction committed successfully");
+
+    let firebaseDeletionPending = false;
+    if (firebaseUidToDelete && firebaseAdmin) {
+      try {
+        await firebaseAdmin.deleteUser(firebaseUidToDelete);
+      } catch (firebaseError) {
+        firebaseDeletionPending = true;
+        console.error(
+          "Firebase account deletion failed after withdrawal:",
+          firebaseError
+        );
+      }
+    }
 
     console.log(`🎉 Team withdrawal completed: ${team.teamName} by ${leader.email}`);
 
     return NextResponse.json({
       success: true,
-      message: "Team withdrawal successful. Your account has been removed.",
+      message: firebaseDeletionPending
+        ? "Team withdrawal successful. Account cleanup is pending."
+        : "Team withdrawal successful. Your account has been removed.",
       withdrawnTeam: {
         teamName: team.teamName,
         leaderEmail: leader.email,

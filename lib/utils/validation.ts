@@ -1,10 +1,16 @@
 import { ITeamMember } from "../../models/Team";
+import { createHmac, randomBytes } from "crypto";
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Phone validation regex (Indian format)
 const PHONE_REGEX = /^(\+91|91|0)?[6-9]\d{9}$/;
+
+/** Escape user-controlled text before it is used in a MongoDB regex. */
+export function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 /**
  * Validate team registration data
@@ -25,8 +31,10 @@ export function validateTeamRegistration(data: TeamRegistrationData): {
   const errors: string[] = [];
 
   // Validate team name
-  if (!data.teamName || data.teamName.trim().length < 3) {
+  if (typeof data.teamName !== "string" || data.teamName.trim().length < 3) {
     errors.push("Team name must be at least 3 characters long");
+  } else if (data.teamName.trim().length > 50) {
+    errors.push("Team name must be at most 50 characters long");
   }
 
   // Validate problem statement
@@ -235,11 +243,20 @@ export function validateURL(url: string): boolean {
  * Generate team portal token (for passwordless login)
  */
 export function generateTeamToken(teamId: string): string {
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(7);
-  return Buffer.from(`${teamId}:${timestamp}:${randomString}`).toString(
-    "base64"
-  );
+  const secret = process.env.TEAM_TOKEN_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("Team token secret is not configured");
+  }
+
+  // Preserve the team id for token consumers, but authenticate the complete
+  // payload with an HMAC so it cannot be edited or forged by a client.
+  const payload = `${teamId}:${Date.now()}:${randomBytes(16).toString("hex")}`;
+  const encodedPayload = Buffer.from(payload).toString("base64url");
+  const signature = createHmac("sha256", secret)
+    .update(payload)
+    .digest("base64url");
+
+  return `${encodedPayload}.${signature}`;
 }
 
 // Legacy frontend validation functions for compatibility
@@ -506,7 +523,7 @@ export const validateCrossTeamDuplicates = async (
     for (const { email, type } of emailsToCheck) {
       // Check if email exists in team members
       const teamsWithMemberEmail = await Team.find({
-        "members.email": { $regex: new RegExp(`^${email}$`, "i") },
+        "members.email": { $regex: new RegExp(`^${escapeRegex(email)}$`, "i") },
       }).select("teamName");
 
       if (teamsWithMemberEmail.length > 0) {
@@ -540,7 +557,7 @@ export const validateCrossTeamDuplicates = async (
 
       // Check if phone exists in team members
       const teamsWithMemberPhone = await Team.find({
-        "members.phone": { $regex: new RegExp(`${phone}$`) },
+        "members.phone": { $regex: new RegExp(`${escapeRegex(phone)}$`) },
       }).select("teamName");
 
       if (teamsWithMemberPhone.length > 0) {
