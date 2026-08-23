@@ -279,7 +279,7 @@ export default function TeamTasks() {
       });
 
       const response = await fetch(
-        `/api/team/tasks/${selectedTask._id}/submit`,
+        `/sih/api/team/tasks/${selectedTask._id}/submit`,
         {
           method: "POST",
           headers: {

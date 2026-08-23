@@ -2,14 +2,29 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import { Admin } from "@/models/Admin";
 import bcrypt from "bcrypt";
+import { sanitizeEmail } from "@/lib/utils/validation";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { email, password, secretKey } = body;
+    const normalizedEmail = sanitizeEmail(email);
 
     // Validate required fields
-    if (!email || !password || !secretKey) {
+    if (
+      !normalizedEmail ||
+      typeof password !== "string" ||
+      password.length < 8 ||
+      password.length > 128 ||
+      typeof secretKey !== "string" ||
+      secretKey.length === 0
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -44,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json(
         { success: false, error: "Please enter a valid email address" },
         { status: 400 }
@@ -52,11 +67,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate password strength
-    if (password.length < 8) {
+    if (password.length < 8 || password.length > 128) {
       return NextResponse.json(
         {
           success: false,
-          error: "Password must be at least 8 characters long",
+          error: "Password must be between 8 and 128 characters long",
         },
         { status: 400 }
       );
@@ -66,7 +81,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
 
     // Check if admin with this email already exists
-    const existingAdmin = await Admin.findOne({ email: email.toLowerCase() });
+    const existingAdmin = await Admin.findOne({ email: normalizedEmail });
     if (existingAdmin) {
       return NextResponse.json(
         { success: false, error: "Admin with this email already exists" },
@@ -80,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     // Create new admin
     const newAdmin = new Admin({
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       passwordHash,
       role: adminRole,
       isActive: true,

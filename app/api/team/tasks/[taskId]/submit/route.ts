@@ -3,7 +3,13 @@ import { verifyAuth } from "@/lib/middleware/auth";
 import { Task } from "@/models/Task";
 import { Team } from "@/models/Team";
 import { uploadToCloudinary } from "@/lib/utils/cloudinary";
-import { validateFile } from "@/lib/utils/validation";
+import {
+  isValidObjectId,
+  sanitizeSingleLineText,
+  sanitizeText,
+  validateFile,
+  validateURL,
+} from "@/lib/utils/validation";
 import dbConnect from "@/lib/mongodb";
 import { Types } from "mongoose";
 
@@ -14,6 +20,13 @@ export async function POST(
 ) {
   try {
     const { taskId } = await context.params;
+
+    if (!isValidObjectId(taskId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid task ID" },
+        { status: 400 }
+      );
+    }
 
     // Authenticate team leader
     const authenticatedRequest = await verifyAuth(request);
@@ -111,7 +124,32 @@ export async function POST(
         );
       }
 
+      if (
+        field.type === "file" &&
+        fieldValue &&
+        !(fieldValue instanceof File)
+      ) {
+        return NextResponse.json(
+          { success: false, error: `Field '${field.label}' must be a file` },
+          { status: 400 }
+        );
+      }
+
+      if (field.type !== "file" && fieldValue instanceof File) {
+        return NextResponse.json(
+          { success: false, error: `Field '${field.label}' must be text data` },
+          { status: 400 }
+        );
+      }
+
       if (field.type === "file" && fieldValue instanceof File) {
+        if (fieldValue.size === 0) {
+          return NextResponse.json(
+            { success: false, error: `File '${field.label}' cannot be empty` },
+            { status: 400 }
+          );
+        }
+
         // Validate file using field-specific restrictions
         const validation = validateFile(
           {
@@ -217,13 +255,11 @@ export async function POST(
       } else if (fieldValue) {
         // Handle other field types
         const fieldValueString = fieldValue.toString();
+        let normalizedValue: string | number = fieldValueString;
 
-        // Validate text length for text and textarea fields
-        if (
-          (field.type === "text" || field.type === "textarea") &&
-          field.maxLength
-        ) {
-          if (fieldValueString.length > field.maxLength) {
+        if (field.type === "text" || field.type === "textarea") {
+          normalizedValue = sanitizeText(fieldValueString, 10000);
+          if (field.maxLength && normalizedValue.length > field.maxLength) {
             return NextResponse.json(
               {
                 success: false,
@@ -232,9 +268,35 @@ export async function POST(
               { status: 400 }
             );
           }
+        } else if (field.type === "url") {
+          normalizedValue = sanitizeSingleLineText(fieldValueString, 2048);
+          if (!validateURL(normalizedValue)) {
+            return NextResponse.json(
+              { success: false, error: `Field '${field.label}' must be a valid URL` },
+              { status: 400 }
+            );
+          }
+        } else if (field.type === "number") {
+          const numberValue = Number(fieldValueString);
+          if (!Number.isFinite(numberValue)) {
+            return NextResponse.json(
+              { success: false, error: `Field '${field.label}' must be a valid number` },
+              { status: 400 }
+            );
+          }
+          normalizedValue = numberValue;
+        } else if (field.type === "date") {
+          const dateValue = new Date(fieldValueString);
+          if (Number.isNaN(dateValue.getTime())) {
+            return NextResponse.json(
+              { success: false, error: `Field '${field.label}' must be a valid date` },
+              { status: 400 }
+            );
+          }
+          normalizedValue = dateValue.toISOString();
         }
 
-        submissionData[field.label] = fieldValueString;
+        submissionData[field.label] = normalizedValue;
       }
     }
 
@@ -307,6 +369,13 @@ export async function GET(
 ) {
   try {
     const { taskId } = await context.params;
+
+    if (!isValidObjectId(taskId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid task ID" },
+        { status: 400 }
+      );
+    }
 
     // Authenticate team leader
     const authenticatedRequest = await verifyAuth(request);

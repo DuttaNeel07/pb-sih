@@ -1,4 +1,10 @@
 import nodemailer from "nodemailer";
+import {
+  escapeHtml,
+  sanitizeEmail,
+  sanitizeSingleLineText,
+  validateEmail,
+} from "./validation";
 
 // Email configuration interface
 export interface EmailOptions {
@@ -32,10 +38,17 @@ const transporter = nodemailer.createTransport({
  */
 export async function sendEmail(options: EmailOptions): Promise<void> {
   try {
+    const recipients = (Array.isArray(options.to) ? options.to : [options.to]).map(
+      (recipient) => sanitizeEmail(recipient)
+    );
+    if (recipients.some((recipient) => !validateEmail(recipient))) {
+      throw new Error("Invalid email recipient");
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_FROM,
-      to: options.to,
-      subject: options.subject,
+      to: Array.isArray(options.to) ? recipients : recipients[0],
+      subject: sanitizeSingleLineText(options.subject, 200),
       html: options.html,
       text: options.text,
       attachments: options.attachments,
@@ -62,7 +75,13 @@ export async function sendTeamRegistrationEmail(
   leaderEmail: string,
   problemStatement: string
 ): Promise<void> {
-  const subject = `SIH 2026 - Team Registration Confirmed: ${teamName}`;
+  const safeTeamName = escapeHtml(teamName);
+  const safeLeaderName = escapeHtml(leaderName);
+  const safeProblemStatement = escapeHtml(problemStatement);
+  const subject = `SIH 2026 - Team Registration Confirmed: ${sanitizeSingleLineText(
+    teamName,
+    80
+  )}`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -86,15 +105,15 @@ export async function sendTeamRegistrationEmail(
                 <p>Smart India Hackathon 2026</p>
             </div>
             <div class="content">
-                <h2>Hello ${leaderName},</h2>
-                <p>Congratulations! Your team <strong>"${teamName}"</strong> has been successfully registered for the Smart India Hackathon 2026.</p>
+                <h2>Hello ${safeLeaderName},</h2>
+                <p>Congratulations! Your team <strong>"${safeTeamName}"</strong> has been successfully registered for the Smart India Hackathon 2026.</p>
                 
                 <div class="highlight">
                     <h3>📋 Registration Details:</h3>
                     <ul>
-                        <li><strong>Team Name:</strong> ${teamName}</li>
-                        <li><strong>Team Leader:</strong> ${leaderName}</li>
-                        <li><strong>Problem Statement:</strong> ${problemStatement}</li>
+                        <li><strong>Team Name:</strong> ${safeTeamName}</li>
+                        <li><strong>Team Leader:</strong> ${safeLeaderName}</li>
+                        <li><strong>Problem Statement:</strong> ${safeProblemStatement}</li>
                         <li><strong>Registration Date:</strong> ${new Date().toLocaleDateString(
                           "en-IN",
                           {
@@ -130,7 +149,13 @@ export async function sendTeamRegistrationEmail(
     to: leaderEmail,
     subject,
     html,
-    text: `Hello ${leaderName}, Your team "${teamName}" has been successfully registered for SIH 2026 with problem statement: ${problemStatement}`,
+    text: `Hello ${sanitizeSingleLineText(leaderName, 100)}, Your team "${sanitizeSingleLineText(
+      teamName,
+      100
+    )}" has been successfully registered for SIH 2026 with problem statement: ${sanitizeSingleLineText(
+      problemStatement,
+      200
+    )}`,
   });
 }
 
@@ -151,7 +176,16 @@ export async function sendTaskAssignmentEmail(
   taskDescription?: string,
   dueDate?: Date
 ): Promise<void> {
-  const subject = `SIH 2026 - New Task Assigned: ${taskTitle}`;
+  const safeTeamName = escapeHtml(teamName);
+  const safeLeaderName = escapeHtml(leaderName);
+  const safeTaskTitle = escapeHtml(taskTitle);
+  const safeTaskDescription = taskDescription
+    ? escapeHtml(taskDescription)
+    : "";
+  const subject = `SIH 2026 - New Task Assigned: ${sanitizeSingleLineText(
+    taskTitle,
+    100
+  )}`;
   const dueDateText = dueDate
     ? `<li><strong>Due Date:</strong> ${dueDate.toLocaleDateString("en-IN", {
         year: "numeric",
@@ -185,16 +219,16 @@ export async function sendTaskAssignmentEmail(
                 <p>Smart India Hackathon 2026</p>
             </div>
             <div class="content">
-                <h2>Hello ${leaderName},</h2>
-                <p>A new task has been assigned to your team <strong>"${teamName}"</strong>.</p>
+                <h2>Hello ${safeLeaderName},</h2>
+                <p>A new task has been assigned to your team <strong>"${safeTeamName}"</strong>.</p>
                 
                 <div class="highlight">
                     <h3>📋 Task Details:</h3>
                     <ul>
-                        <li><strong>Task:</strong> ${taskTitle}</li>
+                        <li><strong>Task:</strong> ${safeTaskTitle}</li>
                         ${
                           taskDescription
-                            ? `<li><strong>Description:</strong> ${taskDescription}</li>`
+                            ? `<li><strong>Description:</strong> ${safeTaskDescription}</li>`
                             : ""
                         }
                         ${dueDateText}
@@ -220,8 +254,14 @@ export async function sendTaskAssignmentEmail(
     to: leaderEmail,
     subject,
     html,
-    text: `Hello ${leaderName}, A new task "${taskTitle}" has been assigned to your team "${teamName}".${
-      taskDescription ? ` ${taskDescription}` : ""
+    text: `Hello ${sanitizeSingleLineText(leaderName, 100)}, A new task "${sanitizeSingleLineText(
+      taskTitle,
+      100
+    )}" has been assigned to your team "${sanitizeSingleLineText(
+      teamName,
+      100
+    )}".${
+      taskDescription ? ` ${sanitizeSingleLineText(taskDescription, 1000)}` : ""
     }`,
   });
 }

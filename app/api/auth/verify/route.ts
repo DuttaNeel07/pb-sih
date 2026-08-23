@@ -3,6 +3,10 @@ import { verifyAuth } from "../../../../lib/middleware/auth";
 import { User } from "../../../../models/User";
 import dbConnect from "../../../../lib/mongodb";
 import { auth as firebaseAdminAuth } from "../../../../lib/firebase-admin";
+import {
+  sanitizeEmail,
+  sanitizeSingleLineText,
+} from "../../../../lib/utils/validation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,17 +51,23 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { email, name } = body;
-    const verifiedEmail = decodedToken.email?.toLowerCase();
-    const requestedEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+    const verifiedEmail = sanitizeEmail(decodedToken.email);
+    const requestedEmail = sanitizeEmail(email);
+    const sanitizedName = sanitizeSingleLineText(name, 100);
 
     // This endpoint is called after Google OAuth to sync user with database
     if (
       !verifiedEmail ||
       !requestedEmail ||
       verifiedEmail !== requestedEmail ||
-      typeof name !== "string" ||
-      name.trim().length < 2
+      sanitizedName.length < 2
     ) {
       return NextResponse.json(
         { success: false, error: "User identity does not match the Firebase token" },
@@ -74,7 +84,7 @@ export async function POST(request: NextRequest) {
       {
         $setOnInsert: {
           email: verifiedEmail,
-          name: name.trim(),
+          name: sanitizedName,
           role: "leader",
           firebaseUid: decodedToken.uid,
         },

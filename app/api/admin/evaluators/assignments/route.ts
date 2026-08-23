@@ -3,6 +3,7 @@ import { verifyAdminAuth } from "@/lib/middleware/adminAuth";
 import { Admin } from "@/models/Admin";
 import { ProblemStatement } from "@/models/ProblemStatement";
 import dbConnect from "@/lib/mongodb";
+import { isValidObjectId } from "@/lib/utils/validation";
 
 // GET /api/admin/evaluators/assignments - Get all evaluator assignments
 export async function GET(request: NextRequest) {
@@ -65,10 +66,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { evaluatorId, problemStatementIds } = await request.json();
+    const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
+    const { evaluatorId, problemStatementIds } = body;
 
     // Validate input
-    if (!evaluatorId || !Array.isArray(problemStatementIds)) {
+    if (
+      !isValidObjectId(evaluatorId) ||
+      !Array.isArray(problemStatementIds) ||
+      problemStatementIds.length > 100 ||
+      problemStatementIds.some((id) => !isValidObjectId(id)) ||
+      new Set(problemStatementIds).size !== problemStatementIds.length
+    ) {
       return NextResponse.json(
         {
           success: false,

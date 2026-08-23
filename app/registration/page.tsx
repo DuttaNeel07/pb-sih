@@ -14,6 +14,8 @@ import { useAuth } from "@/lib/context/AuthContext";
 import { validateNoDuplicates } from "@/lib/utils/client-validation";
 import posthog from "posthog-js";
 import toast from "react-hot-toast";
+import RegistrationCountdown from "@/components/RegistrationCountdown";
+import { isRegistrationOpen } from "@/lib/registration";
 
 interface ProblemStatement {
   _id: string;
@@ -46,6 +48,7 @@ interface ConflictDetail {
 export default function Registration() {
   const { user, refreshTeamStatus } = useAuth();
   const router = useRouter();
+  const [registrationOpen, setRegistrationOpen] = useState(false);
 
   const [problemStatements, setProblemStatements] = useState<
     ProblemStatement[]
@@ -58,6 +61,14 @@ export default function Registration() {
     emailDuplicates: { [key: string]: string };
     phoneDuplicates: { [key: string]: string };
   }>({ emailDuplicates: {}, phoneDuplicates: {} });
+
+  const handleRegistrationOpen = useCallback(() => {
+    setRegistrationOpen(true);
+  }, []);
+
+  useEffect(() => {
+    setRegistrationOpen(isRegistrationOpen());
+  }, []);
 
   const [formData, setFormData] = useState({
     teamName: "",
@@ -370,7 +381,7 @@ export default function Registration() {
   // Fetch problem statements and check for existing team
   useEffect(() => {
     const fetchData = async () => {
-      if (!user || dataFetched) return;
+      if (!registrationOpen || !user || dataFetched) return;
 
       setLoading(true);
       try {
@@ -406,7 +417,7 @@ export default function Registration() {
     };
 
     fetchData();
-  }, [user, dataFetched]);
+  }, [user, dataFetched, registrationOpen]);
 
   // Auto-fill team leader data from authenticated user
   useEffect(() => {
@@ -431,6 +442,28 @@ export default function Registration() {
   useEffect(() => {
     checkDuplicates();
   }, [checkDuplicates]);
+
+  // Show loading spinner
+  if (!registrationOpen) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main className="mx-auto max-w-5xl px-6 pb-24 pt-32">
+            <div className="mb-10 text-center">
+              <p className="mb-3 text-sm uppercase tracking-[0.3em] text-subheading">
+                Smart India Hackathon 2026
+              </p>
+              <h1 className="font-display text-5xl font-light tracking-tight text-heading md:text-7xl">
+                Team Registration
+              </h1>
+            </div>
+            <RegistrationCountdown onExpire={handleRegistrationOpen} />
+          </main>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   // Show loading spinner
   if (loading) {

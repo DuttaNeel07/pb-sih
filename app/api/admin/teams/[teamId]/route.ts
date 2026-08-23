@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySuperAdminAuth } from "../../../../../lib/middleware/adminAuth";
 import dbConnect from "../../../../../lib/mongodb";
 import { Team } from "../../../../../models/Team";
-import { Evaluation } from "../../../../../models/Evaluation";
+import { isValidObjectId } from "../../../../../lib/utils/validation";
 
 // Import models to ensure they are registered with Mongoose
 import "../../../../../models/User";
@@ -10,7 +10,7 @@ import "../../../../../models/ProblemStatement";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     // Authenticate admin
@@ -18,9 +18,9 @@ export async function GET(
 
     await dbConnect();
 
-    const { teamId } = params;
+    const { teamId } = await params;
 
-    if (!teamId) {
+    if (!isValidObjectId(teamId)) {
       return NextResponse.json(
         { success: false, error: "Team ID is required" },
         { status: 400 }

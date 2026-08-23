@@ -12,6 +12,93 @@ export function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const CONTROL_CHARACTERS_REGEX =
+  /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+const HTML_TAG_REGEX = /<[^>]*>/g;
+
+/**
+ * Normalize user-controlled text before validation or persistence. React
+ * escapes rendered text, but normalizing at the API boundary also protects
+ * email templates, logs, and database queries from control characters and
+ * markup-shaped input.
+ */
+export function sanitizeText(value: unknown, maxLength = 1000): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value
+    .normalize("NFKC")
+    .replace(CONTROL_CHARACTERS_REGEX, "")
+    .replace(HTML_TAG_REGEX, "")
+    .trim()
+    .slice(0, maxLength);
+}
+
+export function sanitizeSingleLineText(
+  value: unknown,
+  maxLength = 200
+): string {
+  return sanitizeText(value, maxLength).replace(/\s+/g, " ");
+}
+
+export function sanitizeEmail(value: unknown): string {
+  return sanitizeSingleLineText(value, 254).toLowerCase();
+}
+
+export function sanitizePhone(value: unknown): string {
+  return sanitizeSingleLineText(value, 20).replace(/[^\d+]/g, "");
+}
+
+export function sanitizeEnum(
+  value: unknown,
+  allowedValues: readonly string[]
+): string {
+  const normalized = sanitizeSingleLineText(value, 50).toLowerCase();
+  return allowedValues.includes(normalized) ? normalized : "";
+}
+
+/** Escape values inserted into HTML email templates. */
+export function escapeHtml(value: unknown): string {
+  return sanitizeText(value, 10000).replace(
+    /[&<>'"]/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;",
+      })[character] || character
+  );
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+/** Normalize a team member while keeping missing values for validation errors. */
+export function sanitizeTeamMemberInput(value: unknown): ITeamMember {
+  const member = asRecord(value);
+  const gender = sanitizeEnum(member.gender, ["male", "female", "other"]);
+
+  return {
+    name: sanitizeSingleLineText(member.name, 10000),
+    email: sanitizeSingleLineText(member.email, 10000).toLowerCase(),
+    phone: sanitizeSingleLineText(member.phone, 100).replace(/[^\d+]/g, ""),
+    gender: gender as ITeamMember["gender"],
+    college: sanitizeSingleLineText(member.college, 10000),
+    year: sanitizeSingleLineText(member.year, 1000),
+    branch: sanitizeSingleLineText(member.branch, 10000),
+  };
+}
+
+export function isValidObjectId(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f\d]{24}$/i.test(value);
+}
+
 /**
  * Validate team registration data
  */
@@ -31,14 +118,16 @@ export function validateTeamRegistration(data: TeamRegistrationData): {
   const errors: string[] = [];
 
   // Validate team name
-  if (typeof data.teamName !== "string" || data.teamName.trim().length < 3) {
+  const teamName = sanitizeSingleLineText(data.teamName, 200);
+
+  if (teamName.length < 3) {
     errors.push("Team name must be at least 3 characters long");
-  } else if (data.teamName.trim().length > 50) {
+  } else if (teamName.length > 50) {
     errors.push("Team name must be at most 50 characters long");
   }
 
   // Validate problem statement
-  if (!data.problemStatement) {
+  if (!isValidObjectId(data.problemStatement)) {
     errors.push("Problem statement must be selected");
   }
 
@@ -59,9 +148,11 @@ export function validateTeamRegistration(data: TeamRegistrationData): {
 
     // Check gender diversity (including leader)
     const hasFemaleMember = data.members.some(
-      (member) => member.gender?.toLowerCase() === "female"
+      (member) => sanitizeEnum(member?.gender, ["male", "female", "other"]) === "female"
     );
-    const hasFemaleLead = data.teamLeader?.gender?.toLowerCase() === "female";
+    const hasFemaleLead =
+      sanitizeEnum(data.teamLeader?.gender, ["male", "female", "other"]) ===
+      "female";
 
     if (!hasFemaleMember && !hasFemaleLead) {
       errors.push(
@@ -70,7 +161,7 @@ export function validateTeamRegistration(data: TeamRegistrationData): {
     }
 
     // Check for duplicate emails
-    const emails = data.members.map((m) => m.email.toLowerCase());
+    const emails = data.members.map((m) => sanitizeEmail(m?.email));
     const uniqueEmails = new Set(emails);
     if (emails.length !== uniqueEmails.size) {
       errors.push("All team members must have unique email addresses");
@@ -92,19 +183,26 @@ export function validateTeamMember(
 ): string[] {
   const errors: string[] = [];
   const prefix = `Member ${memberNumber}:`;
+  const normalizedMember = sanitizeTeamMemberInput(member);
 
   // Validate name
-  if (!member.name || member.name.trim().length < 2) {
+  if (normalizedMember.name.length < 2) {
     errors.push(`${prefix} Name must be at least 2 characters long`);
+  } else if (normalizedMember.name.length > 100) {
+    errors.push(`${prefix} Name must be at most 100 characters long`);
   }
 
   // Validate email
-  if (!member.email || !EMAIL_REGEX.test(member.email)) {
+  if (
+    !normalizedMember.email ||
+    normalizedMember.email.length > 254 ||
+    !EMAIL_REGEX.test(normalizedMember.email)
+  ) {
     errors.push(`${prefix} Invalid email address`);
   }
 
   // Validate phone
-  if (!member.phone || !PHONE_REGEX.test(member.phone.replace(/\s/g, ""))) {
+  if (!normalizedMember.phone || !PHONE_REGEX.test(normalizedMember.phone)) {
     errors.push(
       `${prefix} Invalid phone number (must be a valid Indian number)`
     );
@@ -112,25 +210,29 @@ export function validateTeamMember(
 
   // Validate gender
   if (
-    !member.gender ||
-    !["male", "female", "other"].includes(member.gender.toLowerCase())
+    !normalizedMember.gender ||
+    !["male", "female", "other"].includes(normalizedMember.gender)
   ) {
     errors.push(`${prefix} Gender must be selected`);
   }
 
   // Validate college
-  if (!member.college || member.college.trim().length < 3) {
+  if (normalizedMember.college.length < 3) {
     errors.push(`${prefix} College name must be at least 3 characters long`);
+  } else if (normalizedMember.college.length > 200) {
+    errors.push(`${prefix} College name must be at most 200 characters long`);
   }
 
   // Validate year
-  if (!member.year || member.year.trim().length === 0) {
+  if (!normalizedMember.year || normalizedMember.year.length > 50) {
     errors.push(`${prefix} Year must be specified`);
   }
 
   // Validate branch
-  if (!member.branch || member.branch.trim().length < 2) {
+  if (normalizedMember.branch.length < 2) {
     errors.push(`${prefix} Branch must be at least 2 characters long`);
+  } else if (normalizedMember.branch.length > 200) {
+    errors.push(`${prefix} Branch must be at most 200 characters long`);
   }
 
   return errors;
@@ -151,14 +253,16 @@ export function validateAdminRegistration(data: AdminRegistrationData): {
   errors: string[];
 } {
   const errors: string[] = [];
+  const name = sanitizeSingleLineText(data.name, 100);
+  const email = sanitizeEmail(data.email);
 
   // Validate name
-  if (!data.name || data.name.trim().length < 2) {
+  if (name.length < 2) {
     errors.push("Name must be at least 2 characters long");
   }
 
   // Validate email
-  if (!data.email || !EMAIL_REGEX.test(data.email)) {
+  if (!email || !EMAIL_REGEX.test(email)) {
     errors.push("Invalid email address");
   }
 
@@ -194,21 +298,30 @@ export function validateFile(
   options: FileValidationOptions
 ): { isValid: boolean; error?: string } {
   const maxSizeInBytes = options.maxSizeInMB * 1024 * 1024;
+  const safeFileName = sanitizeSingleLineText(file.name, 255);
+  const allowedFormats = options.allowedFormats.map((format) =>
+    sanitizeSingleLineText(format, 20).toLowerCase()
+  );
 
   // Check file size
-  if (file.size > maxSizeInBytes) {
+  if (!Number.isFinite(file.size) || file.size <= 0 || file.size > maxSizeInBytes) {
     return {
       isValid: false,
-      error: `File size must be less than ${options.maxSizeInMB}MB`,
+      error: `File size must be greater than 0 and no more than ${options.maxSizeInMB}MB`,
     };
   }
 
   // Check file format
-  const fileExtension = file.name.split(".").pop()?.toLowerCase();
-  if (!fileExtension || !options.allowedFormats.includes(fileExtension)) {
+  const fileExtension = safeFileName.split(".").pop()?.toLowerCase();
+  if (
+    !fileExtension ||
+    safeFileName.includes("/") ||
+    safeFileName.includes("\\") ||
+    !allowedFormats.includes(fileExtension)
+  ) {
     return {
       isValid: false,
-      error: `File format not allowed. Allowed formats: ${options.allowedFormats.join(
+      error: `File format not allowed. Allowed formats: ${allowedFormats.join(
         ", "
       )}`,
     };
@@ -218,22 +331,16 @@ export function validateFile(
 }
 
 /**
- * Sanitize text input
- */
-export function sanitizeText(text: string): string {
-  return text
-    .trim()
-    .replace(/[<>]/g, "") // Remove potential HTML tags
-    .substring(0, 1000); // Limit length
-}
-
-/**
  * Validate URL
  */
 export function validateURL(url: string): boolean {
   try {
-    new URL(url);
-    return true;
+    const parsed = new URL(sanitizeSingleLineText(url, 2048));
+    return (
+      (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+      !parsed.username &&
+      !parsed.password
+    );
   } catch {
     return false;
   }
@@ -490,14 +597,14 @@ export const validateCrossTeamDuplicates = async (
     // Add team leader email and phone
     if (validationData.teamLeader?.email?.trim()) {
       emailsToCheck.push({
-        email: validationData.teamLeader.email.toLowerCase().trim(),
+        email: sanitizeEmail(validationData.teamLeader.email),
         type: "team leader",
       });
     }
 
     if (validationData.teamLeader?.phone?.trim()) {
       phonesToCheck.push({
-        phone: validationData.teamLeader.phone.replace(/\D/g, ""),
+        phone: sanitizePhone(validationData.teamLeader.phone),
         type: "team leader",
       });
     }
@@ -506,14 +613,14 @@ export const validateCrossTeamDuplicates = async (
     validationData.members.forEach((member, index) => {
       if (member.email?.trim()) {
         emailsToCheck.push({
-          email: member.email.toLowerCase().trim(),
+          email: sanitizeEmail(member.email),
           type: `member ${index + 1}`,
         });
       }
 
       if (member.phone?.trim()) {
         phonesToCheck.push({
-          phone: member.phone.replace(/\D/g, ""),
+          phone: sanitizePhone(member.phone),
           type: `member ${index + 1}`,
         });
       }

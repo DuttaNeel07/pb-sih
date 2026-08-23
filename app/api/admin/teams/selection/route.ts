@@ -28,6 +28,20 @@ export async function GET(request: NextRequest) {
     const status = url.searchParams.get("status");
     const startDate = url.searchParams.get("startDate");
     const endDate = url.searchParams.get("endDate");
+    const validStatuses = [
+      "registered",
+      "selected",
+      "waitlisted",
+      "rejected",
+      "finalist",
+    ];
+
+    if (status && status !== "all" && !validStatuses.includes(status)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid team status filter" },
+        { status: 400 }
+      );
+    }
 
     // Build query for team selection
     const query: Record<string, unknown> = {};
@@ -40,11 +54,24 @@ export async function GET(request: NextRequest) {
     if (startDate || endDate) {
       const dateQuery: Record<string, Date> = {};
       if (startDate) {
-        dateQuery.$gte = new Date(startDate);
+        const parsedStartDate = new Date(startDate);
+        if (Number.isNaN(parsedStartDate.getTime())) {
+          return NextResponse.json(
+            { success: false, error: "Invalid start date" },
+            { status: 400 }
+          );
+        }
+        dateQuery.$gte = parsedStartDate;
       }
       if (endDate) {
         // Add 23:59:59 to end date to include the full day
         const endDateObj = new Date(endDate);
+        if (Number.isNaN(endDateObj.getTime())) {
+          return NextResponse.json(
+            { success: false, error: "Invalid end date" },
+            { status: 400 }
+          );
+        }
         endDateObj.setHours(23, 59, 59, 999);
         dateQuery.$lte = endDateObj;
       }

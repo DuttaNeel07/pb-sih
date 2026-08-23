@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySuperAdminAuth } from "@/lib/middleware/adminAuth";
 import { Team } from "@/models/Team";
 import { sendEmail } from "@/lib/utils/email";
+import {
+  escapeHtml,
+  isValidObjectId,
+  sanitizeSingleLineText,
+} from "@/lib/utils/validation";
 import dbConnect from "@/lib/mongodb";
 
 // PATCH /api/admin/teams/[teamId]/status - Update team status
@@ -11,6 +16,13 @@ export async function PATCH(
 ) {
   try {
     const { teamId } = await context.params;
+
+    if (!isValidObjectId(teamId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid team ID" },
+        { status: 400 }
+      );
+    }
 
     // Verify admin authentication
     const isAuthenticated = await verifySuperAdminAuth(request);
@@ -23,8 +35,15 @@ export async function PATCH(
 
     await dbConnect();
 
+    const body = await request.json();
+    if (body === null || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid request payload" },
+        { status: 400 }
+      );
+    }
     const { status, sendCongratulationsEmail, teamName, problemStatement } =
-      await request.json();
+      body;
 
     // Validate status
     const validStatuses = [
@@ -34,7 +53,12 @@ export async function PATCH(
       "rejected",
       "finalist",
     ];
-    if (!validStatuses.includes(status)) {
+    if (
+      typeof status !== "string" ||
+      !validStatuses.includes(status) ||
+      (sendCongratulationsEmail !== undefined &&
+        typeof sendCongratulationsEmail !== "boolean")
+    ) {
       return NextResponse.json(
         { success: false, error: "Invalid status" },
         { status: 400 }
@@ -62,10 +86,20 @@ export async function PATCH(
       updatedTeam.leader
     ) {
       try {
+        const selectedTeamName =
+          typeof teamName === "string" && teamName.trim()
+            ? teamName
+            : updatedTeam.teamName;
+        const safeTeamName = escapeHtml(selectedTeamName);
+        const safeProblemStatement =
+          typeof problemStatement === "string"
+            ? escapeHtml(problemStatement)
+            : "";
         const leader = updatedTeam.leader as unknown as {
           name: string;
           email: string;
         }; // Type assertion for populated field
+        const safeLeaderName = escapeHtml(leader.name);
         const congratulationsHTML = `
           <!DOCTYPE html>
           <html>
@@ -92,15 +126,13 @@ export async function PATCH(
                 <h2>Your Team Has Been Selected!</h2>
               </div>
               <div class="content">
-                <p>Dear <span class="highlight">${leader.name}</span>,</p>
+                <p>Dear <span class="highlight">${safeLeaderName}</span>,</p>
                 
-                <p>We are thrilled to inform you that your team <span class="highlight">"${
-                  teamName || updatedTeam.teamName
-                }"</span> has been <strong>selected</strong> for the next round!</p>
+                <p>We are thrilled to inform you that your team <span class="highlight">"${safeTeamName}"</span> has been <strong>selected</strong> for the next round!</p>
                 
                 ${
                   problemStatement
-                    ? `<p>Your innovative solution for <span class="highlight">"${problemStatement}"</span> impressed our evaluators.</p>`
+                    ? `<p>Your innovative solution for <span class="highlight">"${safeProblemStatement}"</span> impressed our evaluators.</p>`
                     : ""
                 }
                 
@@ -137,13 +169,15 @@ export async function PATCH(
 
         await sendEmail({
           to: leader.email,
-          subject: `🎉 Congratulations! Team "${
-            teamName || updatedTeam.teamName
-          }" Selected!`,
+          subject: `🎉 Congratulations! Team "${sanitizeSingleLineText(
+            selectedTeamName,
+            100
+          )}" Selected!`,
           html: congratulationsHTML,
-          text: `Congratulations! Your team "${
-            teamName || updatedTeam.teamName
-          }" has been selected for the next round. Keep an eye on your email for further instructions.`,
+          text: `Congratulations! Your team "${sanitizeSingleLineText(
+            selectedTeamName,
+            100
+          )}" has been selected for the next round. Keep an eye on your email for further instructions.`,
         });
       } catch (emailError) {
         console.error("Failed to send congratulations email:", emailError);
