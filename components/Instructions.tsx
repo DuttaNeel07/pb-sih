@@ -85,7 +85,11 @@ export default function Instructions() {
               </li>
               <li className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 bg-subheading/60 rounded-full mt-2"></div>
-                <span className="font-body tracking-wide">If a team works on a problem different from the one they picked, they'll be disqualified</span>
+                <span className="font-body tracking-wide">If a team works on a problem different from the one they picked, they'll be disqualified.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-1.5 h-1.5 bg-subheading/60 rounded-full mt-2"></div>
+                <span className="font-body tracking-wide">The internal round will be conducted entirely online. All teams must participate remotely.</span>
               </li>
             </ul>
           </motion.div>
