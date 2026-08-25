@@ -12,7 +12,7 @@ export async function GET() {
     // Get all active problem statements with available slots
     const problemStatements = await ProblemStatement.find({
       isActive: true,
-      $expr: { $lt: ["$teamCount", "$maxTeams"] },
+      //$expr: { $lt: ["$teamCount", "$maxTeams"] },
     })
       .select("psNumber title description domain link teamCount maxTeams")
       .sort({ psNumber: 1 });
