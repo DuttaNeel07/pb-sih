@@ -162,7 +162,7 @@ export default function ProblemStatements() {
             initial="hidden"
             animate="visible"
           >
-            {problemStatements.length > 0 ? problemStatements.map((problem) => (
+            {problemStatements.length > 0 ? [...problemStatements].sort((a, b) => b.availableSlots - a.availableSlots).map((problem) => (
               <motion.div 
                 key={problem._id}
                 className="group bg-gray-900/30 border border-gray-800 rounded-2xl p-6 md:p-8 hover:border-heading/30 transition-all duration-500 flex flex-col h-full"
