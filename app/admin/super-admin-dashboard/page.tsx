@@ -59,85 +59,101 @@ export default function SuperAdminDashboard() {
 
         // Fetch evaluator assignment stats
         const evaluatorResponse = await fetch(
-          "/api/admin/evaluators/assignments",
+          "/sih/api/admin/evaluators/assignments",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         if (
-          teamsResponse.ok &&
-          psResponse.ok &&
-          tasksResponse.ok &&
-          evaluatorResponse.ok
+          !teamsResponse.ok ||
+          !psResponse.ok ||
+          !tasksResponse.ok ||
+          !evaluatorResponse.ok
         ) {
-          const [teamsData, psData, tasksData, evaluatorData] =
-            await Promise.all([
-              teamsResponse.json(),
-              psResponse.json(),
-              tasksResponse.json(),
-              evaluatorResponse.json(),
-            ]);
+          console.error("One or more API calls failed", {
+            teams: teamsResponse.status,
+            problemStatements: psResponse.status,
+            tasks: tasksResponse.status,
+            evaluators: evaluatorResponse.status,
+          });
+        }
+
+        const [teamsData, psData, tasksData, evaluatorData] =
+          await Promise.all([
+            teamsResponse.ok
+              ? teamsResponse.json()
+              : Promise.resolve({ total: 0 }),
+            psResponse.ok
+              ? psResponse.json()
+              : Promise.resolve({ problemStatements: [] }),
+            tasksResponse.ok ? tasksResponse.json() : Promise.resolve({ tasks: [] }),
+            evaluatorResponse.ok
+              ? evaluatorResponse.json()
+              : Promise.resolve({ evaluators: [] }),
+          ]);
 
           const psStats = psData.problemStatements || [];
           const taskStats = tasksData.tasks || [];
           const evaluators = evaluatorData.evaluators || [];
 
-          // Fetch team status counts separately
-          const [registeredResponse, selectedResponse, finalistResponse] =
-            await Promise.all([
-              fetch("/sih/api/admin/teams?status=registered&limit=1000", {
-                headers: { Authorization: `Bearer ${token}` },
-              }),
-              fetch("/sih/api/admin/teams?status=selected&limit=1000", {
-                headers: { Authorization: `Bearer ${token}` },
-              }),
-              fetch("/sih/api/admin/teams?status=finalist&limit=1000", {
-                headers: { Authorization: `Bearer ${token}` },
-              }),
-            ]);
+        // Fetch team status counts separately
+        const [registeredResponse, selectedResponse, finalistResponse] =
+          await Promise.all([
+            fetch("/sih/api/admin/teams?status=registered&limit=1000", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch("/sih/api/admin/teams?status=selected&limit=1000", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch("/sih/api/admin/teams?status=finalist&limit=1000", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
 
-          const [registeredData, selectedData, finalistData] =
-            await Promise.all([
-              registeredResponse.json(),
-              selectedResponse.json(),
-              finalistResponse.json(),
-            ]);
+        const [registeredData, selectedData, finalistData] = await Promise.all([
+          registeredResponse.ok
+            ? registeredResponse.json()
+            : Promise.resolve({ total: 0 }),
+          selectedResponse.ok
+            ? selectedResponse.json()
+            : Promise.resolve({ total: 0 }),
+          finalistResponse.ok
+            ? finalistResponse.json()
+            : Promise.resolve({ total: 0 }),
+        ]);
 
-          interface EvaluatorWithAssignments {
-            assignedProblemStatements?: { _id: string }[];
-            isActive: boolean;
-          }
-
-          const totalAssignments = evaluators.reduce(
-            (sum: number, evaluator: EvaluatorWithAssignments) =>
-              sum + (evaluator.assignedProblemStatements?.length || 0),
-            0
-          );
-
-          setStats({
-            totalTeams: teamsData.total || 0,
-            registeredTeams: registeredData.total || 0,
-            selectedTeams: selectedData.total || 0,
-            finalistTeams: finalistData.total || 0,
-            totalProblemStatements: psStats.length,
-            activeProblemStatements: psStats.filter(
-              (ps: { isActive: boolean }) => ps.isActive
-            ).length,
-            totalTasks: taskStats.length,
-            activeTasks: taskStats.filter(
-              (t: { isActive: boolean }) => t.isActive
-            ).length,
-            totalEvaluators: evaluators.length,
-            activeEvaluators: evaluators.filter(
-              (e: { isActive: boolean }) => e.isActive
-            ).length,
-            totalAssignments,
-            pendingEvaluations: 0, // This would need a separate API to count pending evaluations
-          });
-        } else {
-          console.error("One or more API calls failed");
+        interface EvaluatorWithAssignments {
+          assignedProblemStatements?: { _id: string }[];
+          isActive: boolean;
         }
+
+        const totalAssignments = evaluators.reduce(
+          (sum: number, evaluator: EvaluatorWithAssignments) =>
+            sum + (evaluator.assignedProblemStatements?.length || 0),
+          0
+        );
+
+        setStats({
+          totalTeams: teamsData.total || 0,
+          registeredTeams: registeredData.total || 0,
+          selectedTeams: selectedData.total || 0,
+          finalistTeams: finalistData.total || 0,
+          totalProblemStatements: psStats.length,
+          activeProblemStatements: psStats.filter(
+            (ps: { isActive: boolean }) => ps.isActive
+          ).length,
+          totalTasks: taskStats.length,
+          activeTasks: taskStats.filter(
+            (t: { isActive: boolean }) => t.isActive
+          ).length,
+          totalEvaluators: evaluators.length,
+          activeEvaluators: evaluators.filter(
+            (e: { isActive: boolean }) => e.isActive
+          ).length,
+          totalAssignments,
+          pendingEvaluations: 0, // This would need a separate API to count pending evaluations
+        });
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {
