@@ -275,11 +275,9 @@ export default function ProblemStatements() {
                     </span>
                     {selectedProblem.link && (
                       <div className="flex flex-wrap gap-1">
-                        {selectedProblem.link.split('/').map((part, index) => (
-                          <span key={index} className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs font-medium border border-blue-500/20 tracking-wide">
-                            {part}
-                          </span>
-                        ))}
+                        <a href={selectedProblem.link} target='_blank' className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full text-xs font-medium border border-blue-500/20 tracking-wide">
+                          {selectedProblem.link}
+                        </a>
                       </div>
                     )}
                   </div>
