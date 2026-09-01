@@ -31,10 +31,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Find all active tasks assigned to this team
+    // Find all active tasks assigned to this team or explicitly available to
+    // every team.
     const tasks = await Task.find({
-      assignedTo: team._id,
       isActive: true,
+      $or: [{ assignedTo: team._id }, { availableToAll: true }],
     }).sort({ dueDate: 1 });
 
     // Get team's submissions for these tasks
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
         title: task.title,
         description: task.description,
         fields: task.fields,
+        availableToAll: task.availableToAll,
         dueDate: task.dueDate,
         createdAt: task.createdAt,
         submission: submission || null,

@@ -19,6 +19,7 @@ export interface ITask extends Document {
   description?: string;
   fields: ITaskField[];
   assignedTo: Types.ObjectId[]; // References to Team documents
+  availableToAll: boolean; // When true, every team can view and submit this task
   dueDate?: Date;
   isActive: boolean;
   createdBy: Types.ObjectId; // Reference to User (admin) who created the task
@@ -101,6 +102,10 @@ const taskSchema = new Schema<ITask>(
         ref: "Team",
       },
     ],
+    availableToAll: {
+      type: Boolean,
+      default: false,
+    },
     dueDate: {
       type: Date,
     },

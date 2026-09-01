@@ -60,7 +60,7 @@ export async function POST(
     }
 
     // Check if task is assigned to this team
-    const isAssigned = task.assignedTo.some(
+    const isAssigned = task.availableToAll || task.assignedTo.some(
       (teamId) => teamId.toString() === team._id.toString()
     );
 
@@ -420,6 +420,7 @@ export async function GET(
         title: task.title,
         description: task.description,
         fields: task.fields,
+        availableToAll: task.availableToAll,
         dueDate: task.dueDate,
       },
       submission: submission || null,

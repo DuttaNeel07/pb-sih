@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context/AuthContext';
 import StatusBanner from './StatusBanner';
+import SubmissionDeadlineBanner from './SubmissionDeadlineBanner';
 import { useState, useEffect } from 'react';
 
 export default function Hero() {
@@ -162,6 +163,7 @@ export default function Hero() {
           className="max-w-6xl mx-auto px-6 text-left mt-8 sm:mt-12"
         >
           <StatusBanner />
+          <SubmissionDeadlineBanner />
         </motion.div>
       </div>
 

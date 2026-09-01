@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySuperAdminAuth } from "@/lib/middleware/adminAuth";
 import { Task } from "@/models/Task";
-import { Team, ITaskSubmission } from "@/models/Team";
+import { Team } from "@/models/Team";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { User } from "@/models/User";
 import dbConnect from "@/lib/mongodb";
@@ -35,10 +35,14 @@ export async function GET(
     }
 
     // Find all teams that have submitted this task
-    const teamsWithSubmissions = await Team.find({
-      _id: { $in: task.assignedTo },
-      "tasks.taskId": taskId,
-    })
+    const teamsWithSubmissions = await Team.find(
+      task.availableToAll
+        ? { "tasks.taskId": taskId }
+        : {
+            _id: { $in: task.assignedTo },
+            "tasks.taskId": taskId,
+          }
+    )
       .populate("leader", "name email")
       .populate("problemStatement", "title")
       .lean();
@@ -76,6 +80,7 @@ export async function GET(
         _id: task._id,
         title: task.title,
         description: task.description,
+        availableToAll: task.availableToAll,
         dueDate: task.dueDate,
       },
     });
