@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/lib/context/AuthContext';
 import StatusBanner from './StatusBanner';
+import SubmissionDeadlineBanner from './SubmissionDeadlineBanner';
 import { useState, useEffect } from 'react';
 
 export default function Hero() {
@@ -159,10 +160,44 @@ export default function Hero() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="max-w-6xl mx-auto px-6 text-left mt-8 sm:mt-12"
+          className="max-w-6xl mx-auto px-6 text-left mt-6 sm:mt-8"
         >
           <StatusBanner />
+          <SubmissionDeadlineBanner />
         </motion.div>
+
+        {/* Scroll prompt */}
+        {showArrow && (
+          <Link
+            href="#instructions"
+            className="relative z-20 mx-auto mt-1 inline-flex text-subheading px-2 sm:px-4"
+          >
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+              className="flex flex-col items-center gap-1 sm:gap-2"
+            >
+              <span className="text-xs sm:text-sm md:text-base text-center leading-tight">
+                <span className="block sm:inline">please read instructions</span>
+                <span className="block sm:inline sm:ml-1">before registering</span>
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 9l6 6 6-6"
+                />
+              </svg>
+            </motion.div>
+          </Link>
+        )}
       </div>
 
       {/* Floating elements */}
@@ -177,38 +212,6 @@ export default function Hero() {
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
       />
 
-      {/* NEW: Conditionally render the arrow based on the `showArrow` state */}
-      {showArrow && (
-        <Link
-          href="#instructions"
-          className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 text-subheading px-2 sm:px-4 z-20"
-        >
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-            className="flex flex-col items-center gap-1 sm:gap-2"
-          >
-            <span className="text-xs sm:text-sm md:text-base text-center leading-tight">
-              <span className="block sm:inline">please read instructions</span>
-              <span className="block sm:inline sm:ml-1">before registering</span>
-            </span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 9l6 6 6-6"
-              />
-            </svg>
-          </motion.div>
-        </Link>
-      )}
     </section>
   );
 }

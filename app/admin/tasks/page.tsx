@@ -13,6 +13,7 @@ interface Task {
   description: string;
   fields: TaskField[];
   assignedTo?: string[];
+  availableToAll?: boolean;
   assignedTeamsCount?: number;
   dueDate?: string;
   isActive: boolean;
@@ -66,6 +67,7 @@ export default function TasksManagement() {
     description: "",
     fields: [] as TaskField[],
     assignedTo: [] as string[],
+    availableToAll: false,
     dueDate: "",
     dueTime: "",
   });
@@ -255,6 +257,17 @@ export default function TasksManagement() {
     setSelectedTeamIds(newSelection);
   };
 
+  const setAvailableToAll = (availableToAll: boolean) => {
+    setNewTask((prev) => ({
+      ...prev,
+      availableToAll,
+      assignedTo: availableToAll ? [] : prev.assignedTo,
+    }));
+    if (availableToAll) {
+      setSelectedTeamIds(new Set());
+    }
+  };
+
   const handleTeamSearch = (query: string) => {
     setTeamSearchQuery(query);
   };
@@ -269,6 +282,7 @@ export default function TasksManagement() {
       description: "",
       fields: [],
       assignedTo: [],
+      availableToAll: false,
       dueDate: "",
       dueTime: "",
     });
@@ -333,6 +347,7 @@ export default function TasksManagement() {
         description: newTask.description,
         fields: newTask.fields,
         assignedTo: newTask.assignedTo,
+        availableToAll: newTask.availableToAll,
         dueDate: combinedDateTime || undefined,
       };
 
@@ -348,6 +363,7 @@ export default function TasksManagement() {
       if (response.ok) {
         posthog.capture("admin_task_created", {
           assigned_team_count: taskData.assignedTo.length,
+          available_to_all: taskData.availableToAll,
           field_count: taskData.fields.length,
           has_due_date: Boolean(taskData.dueDate),
         });
@@ -358,11 +374,16 @@ export default function TasksManagement() {
           description: "",
           fields: [],
           assignedTo: [],
+          availableToAll: false,
           dueDate: "",
           dueTime: "",
         });
         setSelectedTeamIds(new Set()); // Clear team selection
-        toast.success("Task created and assigned successfully!");
+        toast.success(
+          newTask.availableToAll
+            ? "Task created and made available to all teams!"
+            : "Task created and assigned successfully!"
+        );
       } else {
         const error = await response.json();
         toast.error(`Failed to create task: ${error.message}`);
@@ -435,7 +456,7 @@ export default function TasksManagement() {
               Task Management
             </h1>
             <p className="text-subheading font-body">
-              Create and assign tasks to teams
+              Create tasks for specific teams or make them available to everyone
             </p>
           </div>
           <button
@@ -491,11 +512,13 @@ export default function TasksManagement() {
                     </p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <span>
-                        Assigned to{" "}
-                        {task.assignedTeamsCount ??
-                          task.assignedTo?.length ??
-                          0}{" "}
-                        teams
+                        {task.availableToAll
+                          ? "Available to all teams"
+                          : `Assigned to ${
+                              task.assignedTeamsCount ??
+                              task.assignedTo?.length ??
+                              0
+                            } teams`}
                       </span>
                       {task.dueDate && (
                         <span>
@@ -778,6 +801,31 @@ export default function TasksManagement() {
                       Assign to Teams
                     </label>
 
+                    <label className="flex items-start gap-3 rounded-lg border border-heading/30 bg-heading/10 p-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newTask.availableToAll}
+                        onChange={(e) => setAvailableToAll(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-600 text-heading focus:ring-heading"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-white">
+                          Make this task available to everyone
+                        </span>
+                        <span className="mt-1 block text-xs text-gray-400">
+                          Every registered team will be able to view and submit
+                          this task.
+                        </span>
+                      </span>
+                    </label>
+
+                    {newTask.availableToAll ? (
+                      <div className="mt-4 rounded-lg border border-heading/20 bg-gray-800/50 p-4 text-sm text-gray-300">
+                        This task will be visible to all registered teams. Team
+                        selection is not required.
+                      </div>
+                    ) : (
+                      <>
                     {/* Search and Filter Controls */}
                     <div className="mb-4 space-y-3">
                       {/* Search Bar */}
@@ -994,6 +1042,8 @@ export default function TasksManagement() {
                         </div>
                       )}
                     </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Task Fields */}
@@ -1378,7 +1428,8 @@ export default function TasksManagement() {
                       disabled={
                         submitting ||
                         !newTask.title.trim() ||
-                        (newTask.assignedTo?.length || 0) === 0
+                        (!newTask.availableToAll &&
+                          (newTask.assignedTo?.length || 0) === 0)
                       }
                       className="px-6 py-2 bg-heading/20 border border-heading/30 text-heading rounded-lg hover:bg-heading/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >

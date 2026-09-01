@@ -33,13 +33,19 @@ export async function GET(
     }
 
     // Count total teams assigned to this task
-    const totalAssigned = task.assignedTo.length;
+    const totalAssigned = task.availableToAll
+      ? await Team.countDocuments({})
+      : task.assignedTo.length;
 
     // Count teams that have submitted this task
-    const submissionCount = await Team.countDocuments({
-      _id: { $in: task.assignedTo },
-      "tasks.taskId": taskId,
-    });
+    const submissionCount = await Team.countDocuments(
+      task.availableToAll
+        ? { "tasks.taskId": taskId }
+        : {
+            _id: { $in: task.assignedTo },
+            "tasks.taskId": taskId,
+          }
+    );
 
     return NextResponse.json({
       success: true,

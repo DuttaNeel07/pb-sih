@@ -44,6 +44,7 @@ interface Task {
   title: string;
   description?: string;
   fields: TaskField[];
+  availableToAll?: boolean;
   dueDate?: string;
   createdAt: string;
   submission: TaskSubmission | null;
@@ -406,6 +407,12 @@ export default function TeamTasks() {
                       <p className="text-gray-400 text-sm mb-4 line-clamp-3">
                         {renderTextWithLinks(task.description)}
                       </p>
+                    )}
+
+                    {task.availableToAll && (
+                      <div className="mb-4 inline-flex items-center rounded-full border border-heading/30 bg-heading/10 px-2.5 py-1 text-xs font-medium text-heading">
+                        Available to all teams
+                      </div>
                     )}
 
                     {/* Due Date & Countdown */}

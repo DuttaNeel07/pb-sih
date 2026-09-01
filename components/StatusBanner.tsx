@@ -11,7 +11,7 @@ export default function StatusBanner() {
   if (!user) {
     return (
       <motion.div 
-        className="bg-gradient-to-r from-heading/10 to-subheading/10 border border-heading/20 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 md:mb-8"
+        className="bg-gradient-to-r from-heading/10 to-subheading/10 border border-heading/20 rounded-lg p-4 sm:p-6 mb-2 sm:mb-3 md:mb-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -53,7 +53,7 @@ export default function StatusBanner() {
   if (hasTeam) {
     return (
       <motion.div 
-        className="bg-gradient-to-r from-green-600/10 to-green-400/10 border border-green-500/20 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 md:mb-8"
+        className="bg-gradient-to-r from-green-600/10 to-green-400/10 border border-green-500/20 rounded-lg p-4 sm:p-6 mb-2 sm:mb-3 md:mb-4"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -83,7 +83,7 @@ export default function StatusBanner() {
 
   return (
     <motion.div 
-      className="bg-gradient-to-r from-orange-600/10 to-orange-400/10 border border-orange-500/20 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6 md:mb-8"
+      className="bg-gradient-to-r from-orange-600/10 to-orange-400/10 border border-orange-500/20 rounded-lg p-4 sm:p-6 mb-2 sm:mb-3 md:mb-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}

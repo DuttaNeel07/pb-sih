@@ -117,6 +117,7 @@ export async function GET(request: NextRequest) {
         description: task.description,
         fields: task.fields,
         assignedTo: task.assignedTo || [],
+        availableToAll: task.availableToAll,
         assignedTeamsCount: task.assignedTo?.length || 0,
         dueDate: task.dueDate,
         isActive: task.isActive,
@@ -156,16 +157,32 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { title, description, fields, assignedTo, dueDate } = body;
+    const {
+      title,
+      description,
+      fields,
+      assignedTo,
+      availableToAll,
+      dueDate,
+    } = body;
+    if (availableToAll !== undefined && typeof availableToAll !== "boolean") {
+      return NextResponse.json(
+        { success: false, error: "Invalid task visibility option" },
+        { status: 400 }
+      );
+    }
+    const taskAvailableToAll = availableToAll === true;
     const normalizedTitle = sanitizeSingleLineText(title, 200);
     const normalizedDescription =
       typeof description === "string" ? sanitizeText(description, 5000) : undefined;
     const normalizedFields = sanitizeTaskFields(fields);
-    const normalizedAssignedTo = Array.isArray(assignedTo)
-      ? assignedTo
-      : assignedTo === undefined
-        ? []
-        : null;
+    const normalizedAssignedTo = taskAvailableToAll
+      ? []
+      : Array.isArray(assignedTo)
+        ? assignedTo
+        : assignedTo === undefined
+          ? []
+          : null;
     const normalizedDueDate =
       dueDate === undefined || dueDate === null || dueDate === ""
         ? undefined
@@ -246,6 +263,7 @@ export async function POST(request: NextRequest) {
       description: normalizedDescription,
       fields: normalizedFields,
       assignedTo: normalizedAssignedTo,
+      availableToAll: taskAvailableToAll,
       dueDate: normalizedDueDate,
       isActive: true,
       createdBy: new Types.ObjectId(), // Use a placeholder ObjectId for now
@@ -275,11 +293,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Task created and assigned successfully",
+      message: taskAvailableToAll
+        ? "Task created and made available to all teams"
+        : "Task created and assigned successfully",
       task: {
         _id: task._id,
         title: task.title,
         description: task.description,
+        availableToAll: task.availableToAll,
         assignedTeamsCount: teamsToAssign.length,
         createdAt: task.createdAt,
       },

@@ -20,6 +20,7 @@ interface Task {
   _id: string;
   title: string;
   description?: string;
+  availableToAll?: boolean;
   dueDate?: string;
   submissionCount: number;
   totalAssigned: number;
@@ -426,6 +427,11 @@ export default function AdminSubmissions() {
                       <p className="text-gray-400 text-sm mb-3 line-clamp-2">
                         {task.description}
                       </p>
+                    )}
+                    {task.availableToAll && (
+                      <span className="mb-3 inline-flex rounded-full border border-heading/30 bg-heading/10 px-2.5 py-1 text-xs font-medium text-heading">
+                        Available to all teams
+                      </span>
                     )}
                   </div>
                 </div>
