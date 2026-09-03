@@ -14,7 +14,7 @@ export default function SubmissionDeadlineBanner() {
           <p className="mt-1 text-xs leading-relaxed text-gray-300 sm:text-sm">
             Last date to submit your PPT and video submission is{" "}
             <span className="font-semibold text-white">
-              4 September at 11:59 PM IST
+              4 September at 11:59 AM IST
             </span>
             .
           </p>
