@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import ValidatedInput from '@/components/ui/ValidatedInput';
 import GoogleSignInButton from '@/components/ui/GoogleSignInButton';
 import { useAuth } from '@/lib/context/AuthContext';
 import posthog from 'posthog-js';
+import { formatSignupEndAt, isSignupClosed } from '@/lib/signup';
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -20,9 +21,31 @@ export default function Signup() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [signupClosed, setSignupClosed] = useState(() => isSignupClosed());
   
   const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    const updateSignupStatus = async () => {
+      setSignupClosed(isSignupClosed());
+      try {
+        const response = await fetch('/sih/api/auth/signup-status', {
+          cache: 'no-store',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSignupClosed(!data.signupOpen);
+        }
+      } catch {
+        // Use the local deadline if the server-status request is unavailable.
+      }
+    };
+
+    updateSignupStatus();
+    const interval = window.setInterval(updateSignupStatus, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -58,6 +81,11 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (signupClosed) {
+      setError(`Signup closed at ${formatSignupEndAt()}.`);
+      return;
+    }
     
     if (!validateForm()) return;
     
@@ -68,26 +96,32 @@ export default function Signup() {
       await signUp(formData.email, formData.password, formData.name);
       posthog.capture('user_signup_completed', { authentication_method: 'email_password' });
       router.push('/'); // Redirect to home page after successful signup
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Signup error:', error);
-      setError(getErrorMessage(error.code));
+      setError(getErrorMessage(getErrorCode(error)));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (signupClosed) {
+      setError(`Signup closed at ${formatSignupEndAt()}.`);
+      return;
+    }
+
     setError('');
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
       posthog.capture('user_signup_completed', { authentication_method: 'google' });
       router.push('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google sign-in error:', error);
       // Only show error if it's not a popup closed error
-      if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
-        setError(getErrorMessage(error.code));
+      const errorCode = getErrorCode(error);
+      if (errorCode !== 'auth/popup-closed-by-user' && errorCode !== 'auth/cancelled-popup-request') {
+        setError(getErrorMessage(errorCode));
       }
     } finally {
       setIsGoogleLoading(false);
@@ -104,10 +138,46 @@ export default function Signup() {
         return 'Password is too weak. Please choose a stronger password.';
       case 'auth/operation-not-allowed':
         return 'Email/password accounts are not enabled. Please contact support.';
+      case 'SIGNUP_CLOSED':
+        return `Signup closed at ${formatSignupEndAt()}.`;
       default:
         return 'Signup failed. Please try again.';
     }
   };
+
+  const getErrorCode = (error: unknown): string => {
+    return error && typeof error === 'object' && 'code' in error &&
+      typeof error.code === 'string'
+      ? error.code
+      : '';
+  };
+
+  if (signupClosed) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="mx-auto max-w-md px-6 pb-12 pt-32 text-center">
+          <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-8">
+            <p className="text-sm uppercase tracking-[0.3em] text-red-300">
+              Signup closed
+            </p>
+            <h1 className="mt-4 font-display text-4xl font-light text-heading">
+              New account creation is no longer available
+            </h1>
+            <p className="mt-4 text-gray-300">
+              Signup closed at {formatSignupEndAt()}.
+            </p>
+            <Link
+              href="/login"
+              className="mt-6 inline-block text-subheading hover:text-subheading/80"
+            >
+              Sign in to an existing account
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

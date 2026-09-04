@@ -65,14 +65,18 @@ Building this platform provided hands-on experience with:
 
 Add license information here if applicable.
 
-## Registration opening time
+## Registration and signup windows
 
 Set `NEXT_PUBLIC_REGISTRATION_START_AT` in the deployment environment using an
 ISO-8601 timestamp with its timezone offset, for example:
 
 ```env
 NEXT_PUBLIC_REGISTRATION_START_AT=2026-08-24T21:00:00+05:30
+NEXT_PUBLIC_REGISTRATION_END_AT=2026-09-04T11:59:00+05:30
+REGISTRATION_END_AT=2026-09-04T11:59:00+05:30
+NEXT_PUBLIC_SIGNUP_END_AT=2026-09-04T11:59:00+05:30
+SIGNUP_END_AT=2026-09-04T11:59:00+05:30
 ```
 
-The same value controls the frontend countdown and backend registration gate.
-If it is not set, the portal defaults to **24 August 2026 at 9:00 PM IST**.
+Set each server-side value and its `NEXT_PUBLIC_` counterpart to the same time.
+The signup deadline defaults to **4 September 2026 at 11:59 AM IST**.
