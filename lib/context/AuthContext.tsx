@@ -35,6 +35,19 @@ export const useAuth = () => {
   return context;
 };
 
+async function ensureSignupIsOpen() {
+  const response = await fetch('/sih/api/auth/signup-status', {
+    cache: 'no-store',
+  });
+  const data = await response.json();
+
+  if (!response.ok || !data.signupOpen) {
+    throw Object.assign(new Error(data.message || 'Signup is closed'), {
+      code: 'SIGNUP_CLOSED',
+    });
+  }
+}
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -161,6 +174,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signUp = async (email: string, password: string, displayName: string) => {
     setLoading(true);
     try {
+      await ensureSignupIsOpen();
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(user, { displayName });
       
@@ -168,7 +182,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (user) {
         try {
           const token = await user.getIdToken();
-          await fetch('/sih/api/auth/verify', {
+          const response = await fetch('/sih/api/auth/verify', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -180,9 +194,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               firebaseUid: user.uid
             })
           });
+          if (!response.ok) {
+            const data = await response.json();
+            await firebaseSignOut(auth);
+            throw Object.assign(new Error(data.error || 'Signup failed'), {
+              code: data.code,
+            });
+          }
         } catch (syncError) {
           console.error('Error syncing user with backend:', syncError);
-          // Don't throw here as the user is still authenticated
+          throw syncError;
         }
       }
     } catch (error) {
@@ -194,6 +215,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
+      await ensureSignupIsOpen();
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
@@ -201,7 +223,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (result.user) {
         try {
           const token = await result.user.getIdToken();
-          await fetch('/sih/api/auth/verify', {
+          const response = await fetch('/sih/api/auth/verify', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -213,9 +235,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               firebaseUid: result.user.uid
             })
           });
+          if (!response.ok) {
+            const data = await response.json();
+            await firebaseSignOut(auth);
+            throw Object.assign(new Error(data.error || 'Signup failed'), {
+              code: data.code,
+            });
+          }
         } catch (syncError) {
           console.error('Error syncing user with backend:', syncError);
-          // Don't throw here as the user is still authenticated
+          throw syncError;
         }
       }
     } catch (error) {

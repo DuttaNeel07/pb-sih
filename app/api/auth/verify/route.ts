@@ -7,6 +7,11 @@ import {
   sanitizeEmail,
   sanitizeSingleLineText,
 } from "../../../../lib/utils/validation";
+import {
+  formatSignupEndAt,
+  getSignupEndAt,
+  isSignupClosed,
+} from "../../../../lib/signup";
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,6 +32,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    if (isSignupClosed()) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "SIGNUP_CLOSED",
+          error: `Signup closed at ${formatSignupEndAt()}`,
+          signupEndAt: getSignupEndAt(),
+        },
+        { status: 403 }
+      );
+    }
+
     const authHeader = request.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json(
