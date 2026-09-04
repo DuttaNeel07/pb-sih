@@ -140,7 +140,7 @@ export default function AdminSubmissions() {
     const token = localStorage.getItem("adminToken");
     try {
       const response = await fetch(
-        `/api/admin/evaluators/${admin._id}/assignments`,
+        `/sih/api/admin/evaluators/${admin._id}/assignments`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

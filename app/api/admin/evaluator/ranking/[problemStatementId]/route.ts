@@ -34,6 +34,8 @@ export async function GET(
     const { Evaluation } = await import("@/models/Evaluation");
     const { ProblemStatement } = await import("@/models/ProblemStatement");
     const { PptEvaluation } = await import("@/models/PptEvaluations");
+    const { User } = await import("@/models/User");
+    const { Task } = await import("@/models/Task");
 
     // Get the current evaluator
     const evaluator = await Admin.findById(authenticatedRequest.admin?._id);
@@ -108,19 +110,19 @@ export async function GET(
       );
 
       // Organize task submissions with task details
-      const organizedSubmissions = team.tasks
+      const organizedSubmissions = (team.tasks ?? [])
         .filter((submission) => submission.status === "submitted")
         .map((submission) => {
           const taskData = submission.taskId as unknown as {
             _id: string;
             title: string;
             type?: string;
-          };
+          } | null;
 
           return {
-            taskId: taskData._id,
-            taskTitle: taskData.title || "Untitled Task",
-            taskType: taskData.type || "general",
+            taskId: taskData?._id ?? submission.taskId,
+            taskTitle: taskData?.title || "Untitled Task",
+            taskType: taskData?.type || "general",
             submittedAt: submission.submittedAt,
             files: submission.files || [],
             data: submission.data || {},
@@ -196,6 +198,8 @@ export async function POST(
     const { Admin } = await import("@/models/Admin");
     const { Team } = await import("@/models/Team");
     const { Evaluation } = await import("@/models/Evaluation");
+    const { User } = await import("@/models/User");
+    const { Task } = await import("@/models/Task");
 
     // Get the current evaluator
     const evaluator = await Admin.findById(authenticatedRequest.admin?._id);
