@@ -180,7 +180,7 @@ export default function EvaluatorRanking() {
 
     try {
       const response = await fetch(
-        `/api/admin/evaluator/ranking/${problemStatementId}`,
+        `/sih/api/admin/evaluator/ranking/${problemStatementId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -273,7 +273,7 @@ export default function EvaluatorRanking() {
       }));
 
       const response = await fetch(
-        `/api/admin/evaluator/ranking/${problemStatementId}`,
+        `/sih/api/admin/evaluator/ranking/${problemStatementId}`,
         {
           method: "POST",
           headers: {

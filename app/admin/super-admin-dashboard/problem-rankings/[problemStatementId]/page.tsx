@@ -100,7 +100,7 @@ export default function ProblemStatementDetail() {
       }
 
       const response = await fetch(
-        `/api/admin/rankings/problem-statement/${problemStatementId}`,
+        `/sih/api/admin/rankings/problem-statement/${problemStatementId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

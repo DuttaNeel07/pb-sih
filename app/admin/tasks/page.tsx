@@ -116,7 +116,7 @@ export default function TasksManagement() {
       }
 
       const response = await fetch(
-        `/api/admin/teams/selection?${params.toString()}`,
+        `/sih/api/admin/teams/selection?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

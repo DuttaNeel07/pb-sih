@@ -86,7 +86,7 @@ export default function EvaluatorDetail() {
       }
 
       const response = await fetch(
-        `/api/admin/rankings/evaluator/${evaluatorId}`,
+        `/sih/api/admin/rankings/evaluator/${evaluatorId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
         status: team.status,
         registrationDate: team.registrationDate,
         memberCount: team.members.length,
-        taskCount: team.tasks.length,
+        taskCount: (team.tasks || []).length,
         createdAt: team.createdAt,
       })),
       total: totalTeams,
