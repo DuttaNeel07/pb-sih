@@ -3,7 +3,7 @@
  * REGISTRATION_END_AT is deliberately not used here: registration and account
  * creation are separate windows.
  */
-export const DEFAULT_SIGNUP_END_AT = "2026-09-04T11:59:00+05:30";
+export const DEFAULT_SIGNUP_END_AT = "2026-09-21T11:59:00+05:30";
 
 export function getSignupEndAt(): string {
   return (
@@ -15,7 +15,9 @@ export function getSignupEndAt(): string {
 
 export function getSignupEndTimestamp(): number {
   const timestamp = Date.parse(getSignupEndAt());
-  return Number.isNaN(timestamp) ? Date.parse(DEFAULT_SIGNUP_END_AT) : timestamp;
+  return Number.isNaN(timestamp)
+    ? Date.parse(DEFAULT_SIGNUP_END_AT)
+    : timestamp;
 }
 
 export function isSignupClosed(now = Date.now()): boolean {
