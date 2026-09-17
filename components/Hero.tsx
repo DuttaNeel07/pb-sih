@@ -1,12 +1,12 @@
-'use client';
+"use client";
 // IMPORT THE REQUIRED HOOKS
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useAuth } from '@/lib/context/AuthContext';
-import StatusBanner from './StatusBanner';
-import SubmissionDeadlineBanner from './SubmissionDeadlineBanner';
-import { useState, useEffect } from 'react';
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "@/lib/context/AuthContext";
+import StatusBanner from "./StatusBanner";
+import SubmissionDeadlineBanner from "./SubmissionDeadlineBanner";
+import { useState, useEffect } from "react";
 
 export default function Hero() {
   const { user, hasTeam } = useAuth();
@@ -15,15 +15,15 @@ export default function Hero() {
   const [showArrow, setShowArrow] = useState(true);
 
   const getStartedLink = () => {
-    if (!user) return '/login';
-    if (hasTeam) return '/team-info';
-    return '/registration';
+    if (!user) return "/login";
+    if (hasTeam) return "/team-info";
+    return "/registration";
   };
 
   const getStartedText = () => {
-    if (!user) return 'Login to Start';
-    if (hasTeam) return 'View Team Info';
-    return 'Register Team';
+    if (!user) return "Login to Start";
+    if (hasTeam) return "View Team Info";
+    return "Register Team";
   };
 
   // NEW: Add an effect to listen to the scroll event
@@ -38,11 +38,11 @@ export default function Hero() {
     };
 
     // Add the event listener when the component mounts
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
     // Clean up the event listener when the component unmounts
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []); // Empty dependency array means this effect runs only once on mount
 
@@ -91,7 +91,7 @@ export default function Hero() {
             className="text-heading block font-light"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
           >
             Smart India Hackathon
           </motion.span>
@@ -99,7 +99,7 @@ export default function Hero() {
             className="text-subheading block font-light"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.7, ease: 'easeOut' }}
+            transition={{ duration: 0.8, delay: 0.7, ease: "easeOut" }}
           >
             Internal Round
           </motion.span>
@@ -118,7 +118,7 @@ export default function Hero() {
               <div className="absolute -top-1 -left-1 w-3 h-3 bg-heading/40 rounded-full animate-pulse"></div>
               <div
                 className="absolute -bottom-1 -right-1 w-2 h-2 bg-subheading/40 rounded-full animate-pulse"
-                style={{ animationDelay: '0.5s' }}
+                style={{ animationDelay: "0.5s" }}
               ></div>
               <div className="flex items-center gap-2 sm:gap-3">
                 <svg
@@ -135,7 +135,7 @@ export default function Hero() {
                   />
                 </svg>
                 <span className="text-lg sm:text-xl md:text-2xl font-semibold bg-gradient-to-r from-heading to-subheading bg-clip-text text-transparent tracking-wide">
-                  5th September
+                  21st September
                 </span>
                 <svg
                   className="w-4 h-4 sm:w-5 sm:h-5 text-subheading/60"
@@ -174,12 +174,20 @@ export default function Hero() {
           >
             <motion.div
               animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{
+                duration: 1.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
               className="flex flex-col items-center gap-1 sm:gap-2"
             >
               <span className="text-xs sm:text-sm md:text-base text-center leading-tight">
-                <span className="block sm:inline">please read instructions</span>
-                <span className="block sm:inline sm:ml-1">before registering</span>
+                <span className="block sm:inline">
+                  please read instructions
+                </span>
+                <span className="block sm:inline sm:ml-1">
+                  before registering
+                </span>
               </span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -204,14 +212,18 @@ export default function Hero() {
       <motion.div
         className="absolute top-16 sm:top-20 left-6 sm:left-10 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-heading rounded-full"
         animate={{ y: [0, -20, 0], opacity: [0.3, 1, 0.3] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute bottom-20 sm:bottom-32 right-8 sm:right-16 w-2 h-2 sm:w-3 sm:h-3 bg-subheading rounded-full"
         animate={{ y: [0, 15, 0], opacity: [0.4, 1, 0.4] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1,
+        }}
       />
-
     </section>
   );
 }
