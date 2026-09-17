@@ -6,7 +6,14 @@ import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import WithdrawButton from "@/components/WithdrawButton";
 import { useAuth } from "@/lib/context/AuthContext";
-import { ExternalLink, FileText, Download, MessageCircle, Calendar, MapPin } from "lucide-react";
+import {
+  ExternalLink,
+  FileText,
+  Download,
+  MessageCircle,
+  Calendar,
+  MapPin,
+} from "lucide-react";
 
 interface TeamMember {
   name: string;
@@ -139,15 +146,24 @@ export default function TeamInfo() {
             >
               <div className="mb-6">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  <svg
+                    className="w-8 h-8 text-green-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <h2 className="text-3xl font-display text-green-400 mb-4">
                   You&apos;re All Set! 🎉
                 </h2>
                 <p className="text-green-200 font-body text-lg mb-6">
-                  Your team has been successfully registered for the Smart India Hackathon 2026 Internal Round.
+                  Your team has been successfully registered for the Smart India
+                  Hackathon 2026 Internal Round.
                 </p>
               </div>
 
@@ -156,7 +172,7 @@ export default function TeamInfo() {
                   <Calendar className="w-5 h-5 text-blue-400" />
                   <div className="text-left">
                     <p className="text-sm text-gray-400">Date</p>
-                    <p className="text-white font-medium">5th September</p>
+                    <p className="text-white font-medium">21st September</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-center gap-3 p-4 bg-gray-800/30 rounded-lg">
@@ -177,10 +193,12 @@ export default function TeamInfo() {
 
               <div className="text-center">
                 <p className="text-gray-300 font-body mb-4">
-                  Stay updated with all the latest information and announcements.
+                  Stay updated with all the latest information and
+                  announcements.
                 </p>
                 <p className="text-subheading text-sm font-body">
-                  Registration Date: {registrationDate
+                  Registration Date:{" "}
+                  {registrationDate
                     ? new Date(registrationDate).toLocaleDateString("en-IN")
                     : "—"}
                 </p>
@@ -199,16 +217,17 @@ export default function TeamInfo() {
                   Join WhatsApp Group
                 </h2>
                 <p className="text-subheading font-body">
-                  <strong className="text-red-400">Compulsory</strong> - All participants must join for updates and announcements
+                  <strong className="text-red-400">Compulsory</strong> - All
+                  participants must join for updates and announcements
                 </p>
               </div>
 
               <div className="flex justify-center">
                 <div className="text-center">
                   <div className="w-48 h-48 bg-white rounded-2xl p-4 mb-4 mx-auto shadow-2xl">
-                    <img 
-                      src="/sih/sihqr.jpg" 
-                      alt="WhatsApp QR Code" 
+                    <img
+                      src="/sih/sihqr.jpg"
+                      alt="WhatsApp QR Code"
                       className="w-full h-full object-contain rounded-lg"
                     />
                   </div>
@@ -216,9 +235,13 @@ export default function TeamInfo() {
                     Scan this QR code with your phone to join the group
                   </p>
                   <div className="max-w-md mx-auto text-center text-xs sm:text-sm text-gray-400 border-t border-gray-800/60 pt-4">
-                    <p className="font-semibold mb-1 text-red-400">WhatsApp Group Guidelines</p>
+                    <p className="font-semibold mb-1 text-red-400">
+                      WhatsApp Group Guidelines
+                    </p>
                     <p className="leading-relaxed">
-                      This is a professional group exclusively for information sharing and doubts. No irrational or disrespectful behavior will be entertained.
+                      This is a professional group exclusively for information
+                      sharing and doubts. No irrational or disrespectful
+                      behavior will be entertained.
                     </p>
                   </div>
                 </div>
@@ -248,10 +271,13 @@ export default function TeamInfo() {
                     <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-500 rounded-full"></div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-amber-200 mb-2 text-sm sm:text-base">Important Notice</h3>
+                    <h3 className="font-semibold text-amber-200 mb-2 text-sm sm:text-base">
+                      Important Notice
+                    </h3>
                     <p className="text-amber-100/80 text-xs sm:text-sm leading-relaxed">
-                      The <strong>PPT template is mandatory</strong> for the actual hackathon presentation. 
-                      The guidelines are for your reference to understand the rules and requirements.
+                      The <strong>PPT template is mandatory</strong> for the
+                      actual hackathon presentation. The guidelines are for your
+                      reference to understand the rules and requirements.
                     </p>
                   </div>
                 </div>
@@ -263,15 +289,19 @@ export default function TeamInfo() {
                 <motion.div
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 bg-gray-800/30 rounded-xl border border-gray-700 hover:border-heading/30 transition-all duration-300 gap-4"
                   whileHover={{ scale: 1.02 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                       <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">SIH 2026 Idea Presentation Format</h3>
-                      <p className="text-gray-400 text-xs sm:text-sm">PowerPoint template for your hackathon presentation</p>
+                      <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">
+                        SIH 2026 Idea Presentation Format
+                      </h3>
+                      <p className="text-gray-400 text-xs sm:text-sm">
+                        PowerPoint template for your hackathon presentation
+                      </p>
                     </div>
                   </div>
                   <a
@@ -290,15 +320,19 @@ export default function TeamInfo() {
                 <motion.div
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 bg-gray-800/30 rounded-xl border border-gray-700 hover:border-heading/30 transition-all duration-300 gap-4"
                   whileHover={{ scale: 1.02 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
                       <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">SIH 2026 Official Guidelines</h3>
-                      <p className="text-gray-400 text-xs sm:text-sm">Reference document for rules and requirements</p>
+                      <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">
+                        SIH 2026 Official Guidelines
+                      </h3>
+                      <p className="text-gray-400 text-xs sm:text-sm">
+                        Reference document for rules and requirements
+                      </p>
                     </div>
                   </div>
                   <a
@@ -321,11 +355,22 @@ export default function TeamInfo() {
                     <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"></div>
                   </div>
                   <div>
-                    <h4 className="font-medium text-white mb-2 text-sm sm:text-base">What to do with these documents?</h4>
+                    <h4 className="font-medium text-white mb-2 text-sm sm:text-base">
+                      What to do with these documents?
+                    </h4>
                     <ul className="text-gray-300 text-xs sm:text-sm space-y-1">
-                      <li>• Use the PPT template for your hackathon presentation (mandatory)</li>
-                      <li>• Review the guidelines to understand rules and requirements</li>
-                      <li>• Follow the presentation format structure during the hackathon</li>
+                      <li>
+                        • Use the PPT template for your hackathon presentation
+                        (mandatory)
+                      </li>
+                      <li>
+                        • Review the guidelines to understand rules and
+                        requirements
+                      </li>
+                      <li>
+                        • Follow the presentation format structure during the
+                        hackathon
+                      </li>
                       <li>• Keep the template ready for the actual event</li>
                     </ul>
                   </div>
@@ -561,7 +606,7 @@ export default function TeamInfo() {
             </motion.div>
 
             {/* Withdraw Button */}
-            <WithdrawButton 
+            <WithdrawButton
               teamName={team.teamName}
               onWithdrawSuccess={() => {
                 // This will be called after successful withdrawal
