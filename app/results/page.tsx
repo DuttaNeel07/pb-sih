@@ -67,14 +67,14 @@ function TeamCard({
         isWaitlisted
           ? "from-yellow-900/20 to-yellow-800/10 border-yellow-700/30 hover:border-yellow-500/30"
           : "from-gray-900/30 to-gray-800/20 border-gray-700/30 hover:border-heading/30"
-      } border rounded-xl p-6 transition-all duration-300 hover:bg-gray-800/40`}
+      } border rounded-xl p-4 sm:p-6 transition-all duration-300 hover:bg-gray-800/40`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <div
             className={`${
               isWaitlisted ? "bg-yellow-500/20" : "bg-heading/20"
-            } p-2 rounded-lg min-w-[40px] h-[40px] flex items-center justify-center`}
+            } h-10 w-10 shrink-0 rounded-lg p-2 flex items-center justify-center`}
           >
             <span
               className={`${
@@ -84,11 +84,13 @@ function TeamCard({
               {index + 1}
             </span>
           </div>
-          <div>
-            <h3 className="font-display text-xl text-white font-light">
+          <div className="min-w-0 flex-1">
+            <h3 className="break-words font-display text-xl text-white font-light">
               {team.teamName}
             </h3>
-            <p className="text-gray-400 text-sm">Leader: {team.leader.name}</p>
+            <p className="break-words text-sm text-gray-400">
+              Leader: {team.leader.name}
+            </p>
           </div>
         </div>
         <div
@@ -96,12 +98,12 @@ function TeamCard({
             isWaitlisted
               ? "from-yellow-500/20 to-yellow-400/10 border-yellow-500/30"
               : "from-blue-500/20 to-blue-400/10 border-blue-500/30"
-          } border rounded-lg px-3 py-1`}
+          } max-w-full shrink-0 self-start border rounded-lg px-3 py-1 sm:self-auto`}
         >
           <span
             className={`${
               isWaitlisted ? "text-yellow-400" : "text-blue-400"
-            } font-medium text-sm`}
+            } block break-all font-medium text-sm`}
           >
             PS{" "}
             {(() => {
