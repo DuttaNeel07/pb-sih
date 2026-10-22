@@ -135,7 +135,7 @@ export default function Hero() {
                   />
                 </svg>
                 <span className="text-lg sm:text-xl md:text-2xl font-semibold bg-gradient-to-r from-heading to-subheading bg-clip-text text-transparent tracking-wide">
-                  21st September
+                  25th October
                 </span>
                 <svg
                   className="w-4 h-4 sm:w-5 sm:h-5 text-subheading/60"

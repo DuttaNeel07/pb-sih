@@ -172,7 +172,7 @@ export default function TeamInfo() {
                   <Calendar className="w-5 h-5 text-blue-400" />
                   <div className="text-left">
                     <p className="text-sm text-gray-400">Date</p>
-                    <p className="text-white font-medium">21st September</p>
+                    <p className="text-white font-medium">25th October</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-center gap-3 p-4 bg-gray-800/30 rounded-lg">
