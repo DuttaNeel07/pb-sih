@@ -13,7 +13,7 @@ interface WithdrawButtonProps {
 }
 
 export default function WithdrawButton({ teamName, onWithdrawSuccess }: WithdrawButtonProps) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -35,7 +35,13 @@ export default function WithdrawButton({ teamName, onWithdrawSuccess }: Withdraw
       if (response.ok) {
         const data = await response.json();
         posthog.capture("team_withdrawn");
-        toast.success(`Team withdrawal successful! ${data.message}`);
+        try {
+          await signOut();
+          toast.success(`Team withdrawal successful! ${data.message}`);
+        } catch (logoutError) {
+          console.error("Error signing out after withdrawal:", logoutError);
+          toast.error("Team withdrawn, but automatic sign out failed. Please sign out manually.");
+        }
         
         // Call success callback if provided
         if (onWithdrawSuccess) {
