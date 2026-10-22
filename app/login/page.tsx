@@ -16,9 +16,11 @@ export default function Login() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, resetPassword, signInWithGoogle } = useAuth();
   const router = useRouter();
 
   const handleInputChange = (field: string, value: string) => {
@@ -27,6 +29,7 @@ export default function Login() {
       [field]: value
     }));
     if (error) setError(''); // Clear error when user types
+    if (message) setMessage('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,6 +62,36 @@ export default function Login() {
       }
     } finally {
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = formData.email.trim();
+    setError('');
+    setMessage('');
+
+    if (!email) {
+      setError('Enter your email address to receive a password reset link.');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await resetPassword(email);
+      setMessage('If an account exists for this email, check your inbox for the reset link. After setting your new password, return here to sign in.');
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      if (error?.code === 'auth/user-not-found') {
+        setMessage('If an account exists for this email, Firebase will send a password reset link.');
+      } else if (error?.code === 'auth/invalid-email') {
+        setError('Enter a valid email address.');
+      } else if (error?.code === 'auth/too-many-requests') {
+        setError('Too many reset attempts. Please try again later.');
+      } else {
+        setError('Could not send the reset link. Please try again.');
+      }
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -111,9 +144,21 @@ export default function Login() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
+                  role="alert"
                   className="p-4 bg-red-900/20 border border-red-800 rounded-lg text-red-400 text-sm font-body"
                 >
                   {error}
+                </motion.div>
+              )}
+
+              {message && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  role="status"
+                  className="p-4 bg-green-900/20 border border-green-800 rounded-lg text-green-400 text-sm font-body"
+                >
+                  {message}
                 </motion.div>
               )}
 
@@ -130,10 +175,21 @@ export default function Login() {
 
               {/* Password Field */}
               <div>
-                <label className="block text-subheading text-sm font-medium mb-2 tracking-wide">
-                  Password <span className="text-red-400">*</span>
-                </label>
+                <div className="mb-2 flex items-center justify-between gap-4">
+                  <label htmlFor="login-password" className="text-subheading text-sm font-medium tracking-wide">
+                    Password <span className="text-red-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={isResetting}
+                    className="text-sm font-medium text-subheading transition-colors hover:text-subheading/80 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isResetting ? 'Sending...' : 'Forgot password?'}
+                  </button>
+                </div>
                 <input
+                  id="login-password"
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
@@ -186,7 +242,7 @@ export default function Login() {
               {/* Sign Up Link */}
               <div className="text-center">
                 <p className="text-gray-400 font-body">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <Link 
                     href="/signup" 
                     className="text-subheading hover:text-subheading/80 transition-colors duration-300 font-medium"

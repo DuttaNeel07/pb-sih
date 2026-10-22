@@ -8,7 +8,8 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
   signInWithPopup,
-  GoogleAuthProvider
+  GoogleAuthProvider,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import posthog from 'posthog-js';
@@ -19,6 +20,7 @@ interface AuthContextType {
   hasTeam: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -171,6 +173,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const resetPassword = (email: string) =>
+    sendPasswordResetEmail(auth, email);
+
   const signUp = async (email: string, password: string, displayName: string) => {
     setLoading(true);
     try {
@@ -269,6 +274,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     hasTeam,
     isAdmin,
     signIn,
+    resetPassword,
     signUp,
     signInWithGoogle,
     signOut,
