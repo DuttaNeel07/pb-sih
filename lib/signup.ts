@@ -1,9 +1,9 @@
 /**
- * Account signup closes at 11:59 AM IST on 4 September 2026.
+ * Account signup closes at 11:59 AM IST on 25th October 2026 11:59 AM IST.
  * REGISTRATION_END_AT is deliberately not used here: registration and account
  * creation are separate windows.
  */
-export const DEFAULT_SIGNUP_END_AT = "2026-09-21T11:59:00+05:30";
+export const DEFAULT_SIGNUP_END_AT = "2026-10-25T11:59:00+05:30";
 
 export function getSignupEndAt(): string {
   return (
